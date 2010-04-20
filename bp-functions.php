@@ -124,7 +124,7 @@ function bp_ning_import_build_profile_fields( $data ) {
 		
 	<p><?php _e( "Enjoy using BuddyPress!", 'bp-ning-import' ) ?></p>
 
-
+	<?php bp_ning_import_donate_message(); ?>
 
 <?php
 }

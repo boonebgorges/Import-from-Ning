@@ -1,7 +1,7 @@
 <?php
 /*
-Plugin Name: Ning to WordPress member import
-Plugin URI: http://teleogistic.net/code/wordpresswordpress-mu/import-from-ning/
+Plugin Name: Import from Ning
+Plugin URI: http://teleogistic.net
 Description: Import users from Ning export CSV into WordPress/BuddyPress. Based on Dagon Design Import Users
 Author: Boone Gorges
 Version: 1.1
@@ -264,7 +264,9 @@ function bp_ning_import_management_page() {
 				<h3><?php _e( 'Step Three: Import Additional Profile Data to BuddyPress', 'bp-ning-import' ) ?></h3>
 				
 				<p><?php _e( "You didn't select any fields. That means that you're done importing. Enjoy using WordPress and BuddyPress!", 'bp-ning-import' ) ?></p>
-			
+				
+				<?php bp_ning_import_donate_message(); ?>
+				
 			</div>
 		<?php
 		}	
@@ -455,6 +457,8 @@ function bp_ning_import_step_two_results( $u_keys, $data ) {
 			
 			<p><?php _e( "The import is complete! Enjoy using WordPress.", 'bp-ning-import' ) ?></p>
 			
+			<?php bp_ning_import_donate_message(); ?>
+			
 		<?php endif; ?>	
 	
 	</form>
@@ -467,6 +471,21 @@ function bp_ning_import_step_two_results( $u_keys, $data ) {
 	
 	
 	</div>
+<?php
+}
+
+function bp_ning_import_donate_message() {
+?>
+	<hr>
+	
+	<p><?php _e( "I built this free tool in my spare time, to make the transition to WordPress and BuddyPress easier for you. Did you find it useful? Consider a donation!" ) ?></p>
+	<form action="https://www.paypal.com/cgi-bin/webscr" method="post"> 
+		<input type="hidden" name="cmd" value="_s-xclick"> 
+		<input type="hidden" name="hosted_button_id" value="10885547"> 
+		<input type="hidden" name="item_name" value="Donation for Import from Ning - Wordpress/BuddyPress plugin" />
+		<input type="image" src="https://www.paypal.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!"> 
+		<img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">
+	</form>
 <?php
 }
 

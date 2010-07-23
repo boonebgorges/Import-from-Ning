@@ -75,6 +75,10 @@ function bp_ning_import_steps() {
 			break;
 
 		case 'start_over' :
+			delete_option( 'bp_ning_left_off' );
+			delete_option( 'bp_ning_group_array' );
+			delete_option( 'bp_ning_import_users' );
+			delete_option( 'bp_ning_user_array' );
 			delete_option( 'bp_ning_import_finished' );
 			delete_option( 'bp_ning_emails_sent' );
 			bp_ning_import_members_markup();
@@ -164,6 +168,7 @@ function bp_ning_import_create_user( $userdata ) {
 		$bp_member['user_login'] = $user->user_login;
 		$bp_member['id'] = $user->ID;
 		$bp_member['already_exists'] = 1;
+		return $bp_member;
 
 	} else {
 
@@ -236,7 +241,7 @@ function bp_ning_import_create_user( $userdata ) {
 
 
 	// Store the Ning ID for association with content later on
-	update_user_meta( $bp_member['id'], 'ning_id', $userdata->contributerName );
+	// update_user_meta( $bp_member['id'], 'ning_id', $userdata->contributerName );
 
 	return $bp_member;
 }
@@ -258,17 +263,19 @@ function bp_ning_import_get_members() {
 	echo "If you see a Refresh message at the bottom of the page you'll need to refresh the page in order to continue importing.";
 
 	$counter = $left_off;
-	foreach ( $members as $member_key => $member ) {
-		if ( $member_key < $left_off )
-			continue;
 
-		 if ( $counter % 200 == 0 && $counter != 0 ) {
+	foreach ( $members as $member_key => $member ) {
+
+		// echo "<br />$member_key";
+		//if ( $member_key < $left_off )
+		// 	continue;
+
+		/* if ( $counter % 200 == 0 && $counter != 0 ) {
 		 	echo "<h2>Refresh to continue importing users</h2>";
 		 	update_option( 'bp_ning_import_users', $member_id_array );
 			update_option( 'bp_ning_user_array', $ning_id_array );
-			update_option( 'bp_ning_left_off', $member_key );
 		 	die();
-		 }
+		 } */
 
 		 $bp_member = bp_ning_import_create_user( $member );
 
@@ -281,6 +288,7 @@ function bp_ning_import_get_members() {
 		 $ning_id = $member->contributorName;
 		 $ning_id_array[$ning_id] = $bp_member['id'];
 
+		 //update_option( 'bp_ning_left_off', $member_key );
 		 $counter++;
 	}
 
@@ -1055,6 +1063,8 @@ function bp_ning_import_intro_markup() {
 		</ul>
 
 		<p>These latter items are not supported by BuddyPress without the use of plugins. At the end of the import process, you'll see a list of plugins that might help you to manage some of the items that the importer can't handle.</li>
+
+		<p>At various times during the import process, you may be asked to hit the Refresh button. When that happens, if you get a message asking whether you'd like to resubmit your data, make sure you answer <strong>Yes</strong> or <strong>OK</strong>.</p>
 
 		<?php if ( $json_found ) : ?>
 

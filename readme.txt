@@ -18,6 +18,7 @@ This plugin imports the contents of your Ning Network Archive into BuddyPress.
 * Install in your plugins folder and activate.
 * Download your Ning network export, using the Archiver tool as described here: http://help.ning.com/cgi-bin/ning.cfg/php/enduser/std_adp.php?p_faqid=3796
 * Upload the content of your unzipped Ning export (a group of .json files, as well as several directories) to import-from-ning/json.
+* Visit the plugin panel at Dashboard > BuddyPress > Import From Ning
 
 
 == Frequently Asked Questions ==

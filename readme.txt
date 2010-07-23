@@ -4,23 +4,53 @@ Donate link: http://teleogistic.net/donate
 Tags: buddypress, ning, import
 Requires at least: WP 2.8, BuddyPress 1.2
 Tested up to: WP 2.9.2, BuddyPress 1.3 bleeding
-Stable tag: 1.1
+Stable tag: 2.0
 
-Allows users to import the users of a Ning community into a WordPress installation. When BuddyPress is installed, the plugin also gives the option of importing additional profile data into BuddyPress profiles.
+Imports the contents of a Ning Network Archive into BuddyPress
 
 == Description ==
 
-Allows users to import the users of a Ning community into a WordPress installation. When BuddyPress is installed, the plugin also gives the option of importing additional profile data into BuddyPress profiles.
+This plugin imports the contents of your Ning Network Archive into BuddyPress.
 
 
 == Installation ==
 
 * Install in your plugins folder and activate.
-* If you're running BuddyPress, the Import from Ning panel is under Dashboard > BuddyPress. Otherwise it's under Dashboard > Users.
-* Follow the instructions on the Import from Ning panel.
+* Download your Ning network export, using the Archiver tool as described here: http://help.ning.com/cgi-bin/ning.cfg/php/enduser/std_adp.php?p_faqid=3796
+* Upload the content of your unzipped Ning export (a group of .json files, as well as several directories) to import-from-ning/json.
+
+
+== Frequently Asked Questions ==
+
+= What if I'm not running BuddyPress? =
+
+Version 2.0 of Import From Ning does not support WordPress standalone. Use version 1.1: http://wordpress.org/extend/plugins/import-from-ning/download/
+
+= What content will Import From Ning import? =
+
+Import From Ning currently imports the following items from a Ning export: members, member profiles, member avatars, members comments (the "wall"), groups, discussions, and blogs. The plugin attempts to recognize inline images and copy them to the BuddyPress installation, so that you don't lose the images you've put in your blog posts.
+
+= What about my images, movies, and music? =
+
+BuddyPress by itself does not currently support photo, movie, or music galleries. The best plugin available for images right now is BuddyPress Album+ http://wordpress.org/extend/plugins/bp-album/, which is in the process of being adapted to support video and audio galleries as well. In the future, I hope to expand this plugin to import content for display with Album+, but in the meantime you can import your multimedia content manually.
+
+= What do I do if I have a gargantuan network? =
+
+The plugin is most reliable when working with relatively small sets of data, though I have tested it with a network import of over 1300 users. There are various safeguards built into Import From Ning, so that if a particular step fails to complete because your hosting environment runs out of memory, you can simply refresh the page to pick up from where you've left off.
+
+= What's with all these new groups? =
+
+In BuddyPress, each forum must be associated with a group. In cases where your Ning discussion thread was not part of a group, Import From Ning creates a group corresponding to the discussion category and places the discussion topic there.
+
+= You rule! =
+
+That's not really a question, but thanks. You can read my blog at http://teleogistic.net, follow me on Twitter at http://twitter.com/boonebgorges, or send a donation at http://teleogistic.net/donate.
 
 
 == Changelog ==
+
+= 2.0 =
+* Added support for content of Ning network
 
 = 1.1 =
 * Switched from copy-and-paste to direct .csv upload

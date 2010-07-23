@@ -18,7 +18,7 @@
 
 .bp-ning-import-success-users {
 	background-color: #fffbe4;
-	border-color: #dfdfdf;	
+	border-color: #dfdfdf;
 }
 
 .bp-ning-import-error-users {
@@ -28,4 +28,23 @@
 
 .bp-ning-import-error-message {
 	font-weight: bold;
+}
+
+.buddypress_page_import-from-ning-bp-functions .wrap ul {
+	list-style-type: disc;
+	padding-left: 30px;
+}
+
+.donate-nag {
+	display: block;
+	float: right;
+	width: 500px;
+	border: 2px solid #666;
+	background: #fff;
+	padding: 20px;
+	margin: 15px;
+}
+
+.donate-nag h3 {
+	color: #444;
 }

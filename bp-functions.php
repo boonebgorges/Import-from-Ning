@@ -1465,7 +1465,7 @@ function bp_ning_import_sent_email_markup() {
 			$message = str_replace( "%USERNAME%", $user['user_login'], $email_text );
 			$message = str_replace( "%PASSWORD%", $user['password'], $message );
 
-			//wp_mail( $to, $subject, $email_text );
+			wp_mail( $to, $subject, $email_text );
 		}
 
 		update_option( 'bp_ning_emails_sent', 1 );

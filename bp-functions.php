@@ -233,12 +233,7 @@ function bp_ning_import_create_user( $userdata ) {
 		$args['crop_y'] = $cropy;
 	}
 
-	$move_on = false;
-	while ( !$move_on ) {
-		if(	bp_core_avatar_handle_crop( $args ) )
-			$move_on = true;
-	}
-
+	bp_core_avatar_handle_crop( $args ); // todo - find a good way to check for avatar import. bp_core_get_avatar()?
 
 	// Store the Ning ID for association with content later on
 	// update_user_meta( $bp_member['id'], 'ning_id', $userdata->contributerName );
@@ -732,7 +727,7 @@ function bp_ning_import_get_discussions() {
 		}
 
 		if ( !$args['forum_id'] )
-			{ echo "No forum id - skipping"; }
+			{ echo "No forum id - skipping"; continue; }
 
 		if ( !$topic_id = bp_forums_new_topic( $args ) ) {
 			echo "<h2>Refresh to import more discussions</h2>";

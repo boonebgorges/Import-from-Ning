@@ -582,11 +582,13 @@ function bp_ning_import_get_groups() {
 			//echo "<em>Group $group->title already exists</em><br />";
 		}
 
-		foreach( $group->members as $member ) {
-			$ning_group_member_id = $member->contributorName;
-			$member_id = $ning_id_array[$ning_group_member_id];
+		if ( is_array( $group->members ) ) {
+			foreach( $group->members as $member ) {
+				$ning_group_member_id = $member->contributorName;
+				$member_id = $ning_id_array[$ning_group_member_id];
 
-			groups_join_group( $group_id, $member_id );
+				groups_join_group( $group_id, $member_id );
+			}
 		}
 	}
 	update_option( 'bp_ning_group_array', $ning_group_id_array );
@@ -934,35 +936,37 @@ function bp_ning_import_get_blogs() {
 
 	$pages = bp_ning_import_prepare_json( 'pages' );
 
-	foreach ( $pages as $page ) {
+	if ( is_array( $pages ) ) {
+		foreach ( $pages as $page ) {
 
-		$ning_group_creator_id = $page->contributorName;
-		$creator_id = $ning_id_array[$ning_group_creator_id];
+			$ning_group_creator_id = $page->contributorName;
+			$creator_id = $ning_id_array[$ning_group_creator_id];
 
-		$ndate = strtotime( $page->createdDate );
-		$date_created = date( "Y-m-d H:i:s", $ndate );
+			$ndate = strtotime( $page->createdDate );
+			$date_created = date( "Y-m-d H:i:s", $ndate );
 
-		if ( !$page->description )
-			continue;
+			if ( !$page->description )
+				continue;
 
-		$page->description = bp_ning_import_process_inline_images( $page->description, 'pages' );
-		$page->description = str_replace( "\n", '', $page->description );
+			$page->description = bp_ning_import_process_inline_images( $page->description, 'pages' );
+			$page->description = str_replace( "\n", '', $page->description );
 
-		if ( !$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s AND post_type='page' AND post_date = %s", $page->title, $date_created ) ) ) {
-			$args = array(
-				'post_type' => 'page',
-				'post_status' => 'publish',
-				'post_author' => $creator_id,
-				'post_title' => $page->title,
-				'post_content' => $page->description,
-				'post_date' => $date_created
-			);
+			if ( !$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s AND post_type='page' AND post_date = %s", $page->title, $date_created ) ) ) {
+				$args = array(
+					'post_type' => 'page',
+					'post_status' => 'publish',
+					'post_author' => $creator_id,
+					'post_title' => $page->title,
+					'post_content' => $page->description,
+					'post_date' => $date_created
+				);
 
-			$post_id = wp_insert_post( $args );
-			echo "<strong>Page created: $page->title</strong><br />";
+				$post_id = wp_insert_post( $args );
+				echo "<strong>Page created: $page->title</strong><br />";
 
-		} else {
-			echo "<em>Page already exists: $page->title</em><br />";
+			} else {
+				echo "<em>Page already exists: $page->title</em><br />";
+			}
 		}
 	}
 

@@ -206,7 +206,7 @@ function bp_ning_import_create_user( $userdata ) {
 
 	$newfilepath = BP_AVATAR_UPLOAD_PATH . '/' . $filename;
 
-	if ( !file_exists( BP_AVATAR_UPLOAD_PATH . '/avatars/' )
+	if ( !file_exists( BP_AVATAR_UPLOAD_PATH . '/avatars/' ) )
 		mkdir( BP_AVATAR_UPLOAD_PATH . '/avatars/' );
 
 	if ( !file_exists( BP_AVATAR_UPLOAD_PATH . '/avatars/' . $bp_member['id'] ) )

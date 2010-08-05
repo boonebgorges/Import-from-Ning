@@ -193,7 +193,7 @@ function bp_ning_import_create_user( $userdata ) {
 	$oldfilepath = WP_PLUGIN_DIR . '/import-from-ning/json/' . $f[0];
 
 	if ( !file_exists( $oldfilepath ) )
-		continue;
+		return;
 
 	$filename = $g[1];
 	if ( strpos( $filename, '/' ) ) {
@@ -205,6 +205,9 @@ function bp_ning_import_create_user( $userdata ) {
 		return;
 
 	$newfilepath = BP_AVATAR_UPLOAD_PATH . '/' . $filename;
+
+	if ( !file_exists( BP_AVATAR_UPLOAD_PATH . '/avatars/' )
+		mkdir( BP_AVATAR_UPLOAD_PATH . '/avatars/' );
 
 	if ( !file_exists( BP_AVATAR_UPLOAD_PATH . '/avatars/' . $bp_member['id'] ) )
 		mkdir( BP_AVATAR_UPLOAD_PATH . '/avatars/' . $bp_member['id'] );
@@ -439,7 +442,7 @@ function bp_ning_import_process_profiles() {
 
 
 		if ( !$profile_imported ) {
-			xprofile_set_field_data( get_option( 'bp-xprofile-fullname-field-name' ), $member['fullName'] );
+			xprofile_set_field_data( get_option( 'bp-xprofile-fullname-field-name' ), $commented_id, $member['fullName'] );
 
 			foreach( $member as $key => $value ) {
 				if ( !array_key_exists( $key, $field_key ) )
@@ -1060,6 +1063,12 @@ function bp_ning_import_intro_markup() {
 		<p>These latter items are not supported by BuddyPress without the use of plugins. At the end of the import process, you'll see a list of plugins that might help you to manage some of the items that the importer can't handle.</li>
 
 		<p>At various times during the import process, you may be asked to hit the Refresh button. When that happens, if you get a message asking whether you'd like to resubmit your data, make sure you answer <strong>Yes</strong> or <strong>OK</strong>.</p>
+
+		<p><strong>Before continuing,</strong> it's recommended that you do the following:</p>
+		<ol>
+			<li>Activate BuddyPress/bbPress forums (Dashboard > BuddyPress > Forum Setup)</li>
+			<li>Change the permissions on your wp-content/uploads folder to 777. This *shouldn't* be necessary, but it might avert some problems. Be sure to change it back to something more sensible afterward (755 or 744).</li>
+		</ol>
 
 		<?php if ( $json_found ) : ?>
 

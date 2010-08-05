@@ -4,7 +4,7 @@ Donate link: http://teleogistic.net/donate
 Tags: buddypress, ning, import
 Requires at least: WP 2.8, BuddyPress 1.2
 Tested up to: WP 2.9.2, BuddyPress 1.3 bleeding
-Stable tag: 2.0.2
+Stable tag: 2.0.3
 
 Imports the contents of a Ning Network Archive into BuddyPress
 
@@ -50,6 +50,12 @@ That's not really a question, but thanks. You can read my blog at http://teleogi
 
 == Changelog ==
 
+= 2.0.3 =
+* Small bug fixes
+* Updated help text on main screen
+
+= 2.0.2 =
+* Small bug fixes
 
 = 2.0.1 =
 * Addressed another member looping bug related to avatar import

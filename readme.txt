@@ -4,7 +4,7 @@ Donate link: http://teleogistic.net/donate
 Tags: buddypress, ning, import
 Requires at least: WP 2.8, BuddyPress 1.2
 Tested up to: WP 2.9.2, BuddyPress 1.3 bleeding
-Stable tag: 2.0.3
+Stable tag: 2.0.4
 
 Imports the contents of a Ning Network Archive into BuddyPress
 
@@ -17,7 +17,8 @@ This plugin imports the contents of your Ning Network Archive into BuddyPress.
 
 * Install in your plugins folder and activate.
 * Download your Ning network export, using the Archiver tool as described here: http://help.ning.com/cgi-bin/ning.cfg/php/enduser/std_adp.php?p_faqid=3796
-* Upload the content of your unzipped Ning export (a group of .json files, as well as several directories) to import-from-ning/json.
+* Create a directory called `ning-files` in your wp-content directory.
+* Upload the content of your unzipped Ning export (a group of .json files, as well as several directories) to /wp-content/ning-files.
 * Visit the plugin panel at Dashboard > BuddyPress > Import From Ning
 
 

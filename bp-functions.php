@@ -88,7 +88,7 @@ function bp_ning_import_steps() {
 
 
 function bp_ning_import_prepare_json( $type ) {
-	$json = WP_PLUGIN_DIR . '/import-from-ning/json/ning-' . $type . '-local.json';
+	$json = WP_CONTENT_DIR . '/ning-files/ning-' . $type . '-local.json';
 	$data = file_get_contents( $json );
 	//echo $data;
 	$data = preg_replace( '|^\(|', '', $data );
@@ -1034,7 +1034,7 @@ function bp_ning_import_intro_markup() {
 	if ( $members = bp_ning_import_prepare_json( 'members' ) ) {
 		$json_found = true;
 	} else {
-		$json_dir = WP_PLUGIN_DIR . '/import-from-ning/json/';
+		$json_dir = WP_CONTENT_DIR . '/ning-files/';
 		$json_found = false;
 	}
 ?>
@@ -1092,7 +1092,7 @@ function bp_ning_import_intro_markup() {
 
 			<h3><?php _e( 'Houston, we have a problem', 'bp-ning-import' ) ?></h3>
 
-			<p>In order to run the importer, you must first use your FTP program to upload the contents of your Ning export into the directory called <code>json</code> inside of the <code>import-from-ning</code> plugin directory. The plugin couldn't find a members file at <code><?php echo $json_dir ?>ning-members-local.json</code>, which probably means that you haven't uploaded the files to the right place. Upload your unzipped export to the <code>json</code> directory, and try visiting this page again.</p>
+			<p>In order to run the importer, you must first use your FTP program to upload the contents of your Ning export into a directory called <code>ning-files</code> in your <code>wp-content</code> directory. The plugin couldn't find a members file at <code><?php echo $json_dir ?>ning-members-local.json</code>, which probably means that you haven't uploaded the files to the right place. Upload your unzipped export to the <code>json</code> directory, and try visiting this page again.</p>
 
 		<?php endif; ?>
 

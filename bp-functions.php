@@ -89,6 +89,9 @@ function bp_ning_import_steps() {
 
 function bp_ning_import_prepare_json( $type ) {
 	$json = WP_CONTENT_DIR . '/ning-files/ning-' . $type . '-local.json';
+	if ( !file_exists( $json ) )
+		return false;
+
 	$data = file_get_contents( $json );
 	//echo $data;
 	$data = preg_replace( '|^\(|', '', $data );
@@ -190,7 +193,7 @@ function bp_ning_import_create_user( $userdata ) {
 
 	$f = explode( "?", $userdata->profilePhoto );
 	$g = explode( "members/", $f[0] );
-	$oldfilepath = WP_PLUGIN_DIR . '/import-from-ning/json/' . $f[0];
+	$oldfilepath = WP_CONTENT_DIR . '/ning-files/' . $f[0];
 
 	if ( !file_exists( $oldfilepath ) )
 		return;
@@ -489,7 +492,7 @@ function bp_ning_import_process_inline_images( $text, $type ) {
 
 		// Move the file to the uploads dir
 
-		$current_dir = WP_PLUGIN_DIR . '/import-from-ning/json/' . $type . '/';
+		$current_dir = WP_CONTENT_DIR . '/ning-files/' . $type . '/';
 
 		// $images is an array of file names in import-from-ning/json/discussions. Move 'em
 		foreach ( $images as $image ) {

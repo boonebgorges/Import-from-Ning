@@ -265,7 +265,7 @@ function bp_ning_import_get_members() {
 
 	$counter = $left_off;
 
-	foreach ( $members as $member_key => $member ) {
+	foreach ( (array)$members as $member_key => $member ) {
 
 		// echo "<br />$member_key";
 		//if ( $member_key < $left_off )
@@ -316,7 +316,7 @@ function bp_ning_import_get_profile_fields() {
 	);
 
 
-	foreach ( $members as $member ) {
+	foreach ( (array)$members as $member ) {
 		$member = (array)$member;
 		foreach( $member as $key => $value ) {
 			if ( $key == 'profileQuestions' ) {
@@ -348,7 +348,7 @@ function bp_ning_import_process_profiles() {
 
 	// Keep track of renamed fields
 	$field_key = array();
-	foreach( $fields as $key => $field ) {
+	foreach( (array)$fields as $key => $field ) {
 
 		// Check to see if the user provided an alternative name for the field
 		if ( $_POST['pfn'][$key] ) {
@@ -376,14 +376,14 @@ function bp_ning_import_process_profiles() {
 
 	// Get the field ids for the just-created fields. Todo: patch the core so that xprofile_insert_field() returns the id
 
-	foreach( $fields as $field ) {
+	foreach( (array)$fields as $field ) {
 		$field_ids[$field] = xprofile_get_field_id_from_name( $field );
 	}
 
 	// Populate the new fields
 	$members = bp_ning_import_prepare_json( 'members' );
 
-	foreach( $members as $member ) {
+	foreach( (array)$members as $member ) {
 		$member = (array)$member;
 
 		$ncommented_id = $member['contributorName'];
@@ -400,7 +400,7 @@ function bp_ning_import_process_profiles() {
 			$commented_id = $ning_id_array[$ncommented_id];
 			$commented_username = bp_core_get_username( $commented_id );
 
-			foreach( $comments as $comment ) {
+			foreach( (array)$comments as $comment ) {
 				$ncommenter_id = $comment->contributorName;
 				$commenter_id = $ning_id_array[$ncommenter_id];
 
@@ -447,7 +447,7 @@ function bp_ning_import_process_profiles() {
 		if ( !$profile_imported ) {
 			xprofile_set_field_data( get_option( 'bp-xprofile-fullname-field-name' ), $commented_id, $member['fullName'] );
 
-			foreach( $member as $key => $value ) {
+			foreach( (array)$member as $key => $value ) {
 				if ( !array_key_exists( $key, $field_key ) )
 					continue;
 
@@ -534,7 +534,7 @@ function bp_ning_import_get_groups() {
 		$ning_group_id_array = array();
 
 	$counter = 0;
-	foreach ( $groups as $group_key => $group ) {
+	foreach ( (array)$groups as $group_key => $group ) {
 
 		if ( $counter >= 30 ) {
 			update_option( 'bp_ning_group_array', $ning_group_id_array );
@@ -616,7 +616,7 @@ function bp_ning_import_get_discussion_groups() {
 	$discussions = bp_ning_import_prepare_json( 'discussions' );
 
 	$counter = 0;
-	foreach ( $discussions as $discussion_key => $discussion ) {
+	foreach ( (array)$discussions as $discussion_key => $discussion ) {
 		if ( !isset( $discussion->category ) )
 			continue;
 
@@ -677,7 +677,7 @@ function bp_ning_import_get_discussions() {
 
 	$counter = 0;
 	$what = 0;
-	foreach ( $discussions as $discussion_key => $discussion ) {
+	foreach ( (array)$discussions as $discussion_key => $discussion ) {
 		unset( $topic_id );
 
 		if ( $counter >= 4 ) {
@@ -870,7 +870,7 @@ function bp_ning_import_get_blogs() {
 
 	$blogs = bp_ning_import_prepare_json( 'blogs' );
 
-	foreach ( $blogs as $blog ) {
+	foreach ( (array)$blogs as $blog ) {
 		$ning_group_creator_id = $blog->contributorName;
 		$creator_id = $ning_id_array[$ning_group_creator_id];
 
@@ -1196,7 +1196,7 @@ function bp_ning_import_members_markup() {
 		</tr>
 
 
-		<?php foreach( $member_id_array['success'] as $bp_member ) : ?>
+		<?php foreach( (array)$member_id_array['success'] as $bp_member ) : ?>
 			<tr>
 				<td><?php echo $bp_member['id'] ?></td>
 				<td><?php echo $bp_member['user_name'] ?></td>
@@ -1235,7 +1235,7 @@ function bp_ning_import_profiles_markup() {
 		</tr>
 
 		<?php $update = false; ?>
-		<?php foreach( $profile_fields as $pf ) : ?>
+		<?php foreach( (array)$profile_fields as $pf ) : ?>
 			<?php if ( xprofile_get_field_id_from_name( $pf ) ) continue; ?>
 			<?php $update = true; ?>
 			<tr>
@@ -1458,7 +1458,7 @@ The folks at $blogname";
 	</div>
 
 	<ul>
-	<?php foreach ( $users['success'] as $user ) : ?>
+	<?php foreach ( (array)$users['success'] as $user ) : ?>
 		<li><?php echo $user['user_name'] . " &middot; " . $user['user_email'] ?></li>
 	<?php endforeach; ?>
 	</ul>
@@ -1481,7 +1481,7 @@ function bp_ning_import_sent_email_markup() {
 		$subject = stripslashes( $_POST['email-subject'] );
 		$email_text = stripslashes( $_POST['email-text'] );
 
-		foreach ( $users['success'] as $user ) {
+		foreach ( (array)$users['success'] as $user ) {
 			$to = $user['user_email'];
 			$message = str_replace( "%USERNAME%", $user['user_login'], $email_text );
 			$message = str_replace( "%PASSWORD%", $user['password'], $message );

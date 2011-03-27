@@ -51,6 +51,9 @@ That's not really a question, but thanks. You can read my blog at http://teleogi
 
 == Changelog ==
 
+= 2.0.5 =
+* Fixed some debug notices
+
 = 2.0.3 =
 * Small bug fixes
 * Updated help text on main screen

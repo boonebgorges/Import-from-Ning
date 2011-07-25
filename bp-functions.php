@@ -569,11 +569,13 @@ function bp_ning_import_get_groups() {
 			if ( $group_id = groups_create_group( $args ) ) {
 				groups_update_groupmeta( $group_id, 'last_activity', $date_created );
 				groups_update_groupmeta( $group_id, 'total_member_count', 1 );
-				groups_new_group_forum( $group_id, $group->title, $group->description );
-				echo "$group_key) <strong>Created group: $group->title</strong><br />";
-				if ( !$forum_id = groups_get_groupmeta( $group_id, 'forum_id' ) ) {
-					print_r($group);
-					die();
+				
+				if ( bp_is_active( 'forums' ) ) {
+					groups_new_group_forum( $group_id, $group->title, $group->description );
+					echo "$group_key) <strong>Created group: $group->title</strong><br />";
+					if ( !$forum_id = groups_get_groupmeta( $group_id, 'forum_id' ) ) {
+						echo "&nbsp;&nbsp;&nbsp;&nbsp; Could not create group forum for $group->title";
+					}
 				}
 
 				$ngroup_id = $group->id;
@@ -1319,11 +1321,16 @@ function bp_ning_import_discussion_groups_markup() {
 
 		<h3><?php _e( 'Discussion groups', 'bp-ning-import' ) ?></h3>
 
-		<p><?php _e( 'Import from Ning is now importing your Ning groups. If you\'ve got a lot of groups, you might have to refresh the page in order to get them all. If so, you will see a message near the bottom of the screen.', 'bp-ning-import' ) ?></p>
+		<?php if ( bp_is_active( 'forums' ) && bp_forums_is_installed_correctly() ) : ?>
+			<p><?php _e( 'Import from Ning is now importing your Ning groups. If you\'ve got a lot of groups, you might have to refresh the page in order to get them all. If so, you will see a message near the bottom of the screen.', 'bp-ning-import' ) ?></p>
+	
+			<p><?php _e( 'Once you\'ve finished importing groups, click Continue at the bottom of the page to move on to the next step.', 'bp-ning-import' ) ?></p>
 
-		<p><?php _e( 'Once you\'ve finished importing groups, click Continue at the bottom of the page to move on to the next step.', 'bp-ning-import' ) ?></p>
+			<?php $discussion_groups = bp_ning_import_get_discussion_groups(); ?>
 
-	<?php $discussion_groups = bp_ning_import_get_discussion_groups(); ?>
+		<?php else : ?>
+			<p><?php _e( 'It looks like you\'ve either disabled group forums, or you haven\'t set them up correctly. If you don\'t plan to use forums, click Continue. Otherwise, ensure that your forum setup is complete, and then return to this page.', 'bp-ning-import' ) ?></p>
+		<?php endif ?>
 
 	<div class="submit">
 			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">

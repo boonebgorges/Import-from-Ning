@@ -46,10 +46,14 @@ In BuddyPress, each forum must be associated with a group. In cases where your N
 
 = You rule! =
 
-That's not really a question, but thanks. You can read my blog at http://teleogistic.net, follow me on Twitter at http://twitter.com/boonebgorges, or send a donation at http://teleogistic.net/donate.
+That's not really a question, but thanks. You can read my blog at http://teleogistic.net, follow me on Twitter at http://twitter.com/boone, or send a donation at http://teleogistic.net/donate.
 
 
 == Changelog ==
+
+= 2.0.7 =
+* Improved compatibility with WP Network Admin
+* Better error messages
 
 = 2.0.6 =
 * Fixed email problem. Props Karen Chun

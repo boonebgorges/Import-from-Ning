@@ -21,7 +21,7 @@ function bp_ning_import_add_management_pages() {
 
 	add_action( "admin_print_styles-$plugin_page", 'bp_ning_import_style' );
 }
-add_action('admin_menu', 'bp_ning_import_add_management_pages');
+add_action( function_exists( 'is_network_admin' ) && is_multisite() ? 'network_admin_menu' : 'admin_menu', 'bp_ning_import_add_management_pages');
 
 
 function bp_ning_import_style() {

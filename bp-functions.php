@@ -1095,7 +1095,9 @@ function bp_ning_import_intro_markup() {
 
 			<h3><?php _e( 'Houston, we have a problem', 'bp-ning-import' ) ?></h3>
 
-			<p>In order to run the importer, you must first use your FTP program to upload the contents of your Ning export into a directory called <code>ning-files</code> in your <code>wp-content</code> directory. The plugin couldn't find a members file at <code><?php echo $json_dir ?>ning-members-local.json</code>, which probably means that you haven't uploaded the files to the right place. Upload your unzipped export to the <code>json</code> directory, and try visiting this page again.</p>
+			<p>In order to run the importer, you must first use your FTP program to upload the contents of your Ning export into a directory called <code>ning-files</code> in your <code>wp-content</code> directory. The plugin couldn't find a valid members file at <code><?php echo $json_dir ?>ning-members-local.json</code>, which probably means that you haven't uploaded the files to the right place. Upload your unzipped export to the <code>json</code> directory, and try visiting this page again.</p>
+
+			<p>If you're sure that your files are in the right place, then the most likely explanation is that your <code>ning-members-local.json</code> file is invalidly formatted. Contact Ning to ask about getting a new one.</p>
 
 		<?php endif; ?>
 

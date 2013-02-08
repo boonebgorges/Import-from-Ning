@@ -2,7 +2,7 @@
 /* Import from Ning BP functions */
 
 function bp_ning_import_add_management_pages() {
-	$plugin_page = add_submenu_page( 'bp-general-settings', __('Import from Ning','bp-ning-import'), __('Import from Ning','bp-ning-import'), 'manage_options', __FILE__, 'bp_ning_import_steps' );
+	$plugin_page = add_submenu_page( 'tools.php', __('Import from Ning','bp-ning-import'), __('Import from Ning','bp-ning-import'), 'manage_options', __FILE__, 'bp_ning_import_steps' );
 
 	add_action( "admin_print_styles-$plugin_page", 'bp_ning_import_style' );
 }
@@ -744,8 +744,8 @@ function bp_ning_import_get_discussions() {
 
 			groups_record_activity( array(
 				'user_id' => $creator_id,
-				'action' => apply_filters( 'groups_activity_new_forum_topic_action', $activity_action, $discussion->description, &$topic ),
-				'content' => apply_filters( 'groups_activity_new_forum_topic_content', $activity_content, $discussion->description, &$topic ),
+				'action' => apply_filters( 'groups_activity_new_forum_topic_action', $activity_action, $discussion->description, $topic ),
+				'content' => apply_filters( 'groups_activity_new_forum_topic_content', $activity_content, $discussion->description, $topic ),
 				'primary_link' => apply_filters( 'groups_activity_new_forum_topic_primary_link', bp_get_group_permalink( $group ) . 'forum/topic/' . $topic->topic_slug . '/' ),
 				'type' => 'new_forum_topic',
 				'item_id' => $group_id,
@@ -754,7 +754,7 @@ function bp_ning_import_get_discussions() {
 				'hide_sitewide' => 0
 			) );
 
-			do_action( 'groups_new_forum_topic', $group_id, &$topic );
+			do_action( 'groups_new_forum_topic', $group_id, $topic );
 		}
 
 		// Now check for comments
@@ -828,8 +828,8 @@ function bp_ning_import_get_discussions() {
 
 				groups_record_activity( array(
 					'user_id' => $creator_id,
-					'action' => apply_filters( 'groups_activity_new_forum_post_action', $activity_action, $post_id, $reply->description, &$topic ),
-					'content' => apply_filters( 'groups_activity_new_forum_post_content', $activity_content, $post_id, $reply->description, &$topic ),
+					'action' => apply_filters( 'groups_activity_new_forum_post_action', $activity_action, $post_id, $reply->description, $topic ),
+					'content' => apply_filters( 'groups_activity_new_forum_post_content', $activity_content, $post_id, $reply->description, $topic ),
 					'primary_link' => apply_filters( 'groups_activity_new_forum_post_primary_link', "{$primary_link}#post-{$post_id}" ),
 					'type' => 'new_forum_post',
 					'item_id' => $group_id,

@@ -1597,24 +1597,33 @@ function bp_ning_import_discussions_markup() {
 
 		<h3><?php _e( 'Discussions', 'bp-ning-import' ) ?></h3>
 
-		<p><?php _e( 'Import from Ning is now importing your Ning groups. Importing discussion is hard work. If you\'re importing more than a few, you\'ll probably find that you need to refresh the page several times to get them all. If you see a Refresh message at the bottom of the screen, you\'ll know you need to refresh.', 'bp-ning-import' ) ?></p>
-
-
-
-		<p><?php _e( 'When all of your discussions have been imported, a Continue button will appear near the bottom of the screen. Click it to move on to the next step.', 'bp-ning-import' ) ?></p>
-
-
+		<p><?php _e( 'Import from Ning is now importing your Ning groups.', 'bp-ning-import' ) ?></p>
 
 		<?php $discussions = bp_ning_import_get_discussions(); ?>
 
-	<div class="submit">
-			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
-			<input type="hidden" id="current_step" name="current_step" value="discussions_done" />
-	</div>
+		<?php if ($discussions): ?>
+
+			<p><?php _e( '<strong>All of your discussions have been imported!</strong> Hit Continue to continue to the next step.', 'bp-ning-import' ) ?></p>
+
+			<div class="submit">
+					<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
+					<input type="hidden" id="current_step" name="current_step" value="blogs" />
+			</div>
+
+		<?php else: ?>
+
+			<p><?php _e( 'Discussions are <strong>not yet finished</strong> importing. Hit Continue to continue importing discussions.', 'bp-ning-import' ) ?></p>
+
+			<div class="submit">
+					<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
+					<input type="hidden" id="current_step" name="current_step" value="discussions" />
+			</div>
+
+		<?php endif; ?>
 
 	</form>
 
-<?
+<?php
 }
 
 

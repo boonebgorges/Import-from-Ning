@@ -1045,6 +1045,106 @@ function bp_ning_import_get_blogs() {
 	unset( $pages );
 }
 
+function bp_ning_import_get_events() {
+	global $wpdb;
+
+	$ning_id_array = get_option( 'bp_ning_user_array' );
+	//delete_option('bp_ning_events_imported');
+	$imported = get_option( 'bp_ning_events_imported', array() );
+
+	$events = bp_ning_import_prepare_json( 'events', false );
+
+	$counter = 0;
+
+	foreach ( (array)$events as $event ) {
+		if ( isset( $imported[ $event->id ] ) )
+			continue;
+
+		if ($counter >= 30) {
+			update_option('bp_ning_events_imported', $imported);
+			printf( __( '%d out of %d events done.' ), count($imported), count($events) );
+			return false;
+		}
+
+		$post_date = date('Y-m-d H:i:s', strtotime($event->createdDate));
+		if ( $post_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s AND post_type=%s AND post_date = %s", $event->title, TribeEvents::POSTTYPE, $post_date ) ) ) {
+			echo "<strong>Event already exists: $event->title</strong><br />";
+			$imported[$event->id] = true;
+			continue;
+		}
+
+
+		$ning_group_creator_id = $event->contributorName;
+		$creator_id = $ning_id_array[$ning_group_creator_id];
+		$creator = get_userdata( $creator_id );
+
+		$start = strtotime($event->startDate);
+		$end = strtotime($event->endDate);
+		$args = array(
+			'post_title' => $event->title,
+			'post_content' => $event->description,
+			'post_date' => $post_date,
+			'post_modified' => date('Y-m-d H:i:s', strtotime($event->updatedDate)),
+			'post_status' => 'publish',
+			'post_author' => $creator_id,
+			'EventStartDate' => date('Y-m-d', $start),
+			'EventEndDate' => date('Y-m-d', $end),
+			'Venue' => array(),
+			'Organizer' => array(
+				'Organizer' => $creator->display_name,
+				'Email' => $creator->user_email
+			),
+		);
+
+		if (isset($event->isPrivate) && $event->isPrivate)
+			$args['post_status'] = 'private';
+
+		if (isset($event->allDay) && $event->allDay) {
+			$args['EventAllDay'] = true;
+		}
+		else {
+			$args['EventStartHour'] = date('h', $start);
+			$args['EventStartMinute'] = date('i', $start);
+			$args['EventStartMeridian'] = date('a', $start);
+			$args['EventEndHour'] = date('h', $end);
+			$args['EventEndMinute'] = date('i', $end);
+			$args['EventEndMeridian'] = date('a', $end);
+		}
+
+		if (isset($event->location)) {
+			$args['Venue'] = array(
+				'Venue' => $event->location,
+				'Country' => 'AU',
+			);
+
+			if (isset($event->street))
+				$args['Venue']['Address'] = $event->street;
+
+			if (isset($event->city))
+				$args['Venue']['City'] = $event->city;
+
+			if (isset($event->contactInfo))
+				$args['Venue']['Phone'] = $event->contactInfo;
+		}
+		$event_id = tribe_create_event($args);
+
+		if (is_wp_error($event_id)) {
+			echo "<strong>Unable to create event: $event->title - Error was " . $event_id->get_error_message() . '</strong><br />';
+			continue;
+		}
+
+		if (isset($event->website))
+			add_post_meta($event_id, '_bp_ning_event_website', $event->website);
+
+		$imported[$event->id] = true;
+		$counter++;
+
+		echo "<strong>Event created: $event->title</strong><br />";
+	}
+	update_option('bp_ning_events_imported', $imported);
+
+	return true;
+}
 
 function bp_ning_import_insert_post( $args = '' ) {
 	global $bp;

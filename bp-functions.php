@@ -949,8 +949,6 @@ function bp_ning_import_get_blogs() {
 		$ndate = strtotime( $blog->publishTime );
 		$date_created = date( "Y-m-d H:i:s", $ndate );
 
-		$blog->description = bp_ning_import_process_inline_images( $blog->description, 'blogs' );
-
 		if ( !$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s AND post_type='post' AND post_date = %s", $blog->title, $date_created ) ) ) {
 			$args = array(
 				'post_type' => 'post',
@@ -962,6 +960,8 @@ function bp_ning_import_get_blogs() {
 			);
 
 			$post_id = wp_insert_post( $args );
+			bp_ning_import_process_inline_images_new( 'blogs', $post_id, 'post' );
+
 			echo "<strong>Blog post created: $blog->title</strong><br />";
 
 		} else {
@@ -975,8 +975,6 @@ function bp_ning_import_get_blogs() {
 
 				$ndate = strtotime( $reply->createdDate );
 				$date_created = date( "Y-m-d H:i:s", $ndate );
-
-				$reply->description = bp_ning_import_process_inline_images( $reply->description, 'blogs' );
 
 				$commenter_data = get_userdata( $creator_id );
 
@@ -999,6 +997,7 @@ function bp_ning_import_get_blogs() {
 					continue;
 
 				$post_id = wp_insert_comment( $args );
+				bp_ning_import_process_inline_images_new( 'blogs', $post_id, 'comment' );
 
 			}
 		}
@@ -1021,7 +1020,6 @@ function bp_ning_import_get_blogs() {
 			if ( !$page->description )
 				continue;
 
-			$page->description = bp_ning_import_process_inline_images( $page->description, 'pages' );
 			$page->description = str_replace( "\n", '', $page->description );
 
 			if ( !$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s AND post_type='page' AND post_date = %s", $page->title, $date_created ) ) ) {
@@ -1035,6 +1033,7 @@ function bp_ning_import_get_blogs() {
 				);
 
 				$post_id = wp_insert_post( $args );
+				//bp_ning_import_process_inline_images_new( 'pages', $post_id );
 				echo "<strong>Page created: $page->title</strong><br />";
 
 			} else {

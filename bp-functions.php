@@ -80,8 +80,11 @@ function bp_ning_import_steps() {
 }
 
 
-function bp_ning_import_prepare_json( $type ) {
-	$json = WP_CONTENT_DIR . '/ning-files/ning-' . $type . '-local.json';
+function bp_ning_import_prepare_json( $type, $local = true ) {
+	if ( $local )
+		$type .= '-local';
+
+	$json = WP_CONTENT_DIR . '/ning-files/ning-' . $type . '.json';
 	if ( !file_exists( $json ) )
 		return false;
 
@@ -90,25 +93,26 @@ function bp_ning_import_prepare_json( $type ) {
 	$data = preg_replace( '|^\(|', '', $data );
 	$data = preg_replace( '|\)$|', '', $data );
 	$data = str_replace( '}{', '},{', $data );
+	$data = str_replace( ']{', ',{', $data );
 	$parsed = json_decode( $data );
 
 
 
 /* switch(json_last_error())
-    {
-        case JSON_ERROR_DEPTH:
-            echo ' - Maximum stack depth exceeded';
-        break;
-        case JSON_ERROR_CTRL_CHAR:
-            echo ' - Unexpected control character found';
-        break;
-        case JSON_ERROR_SYNTAX:
-            echo ' - Syntax error, malformed JSON';
-        break;
-        case JSON_ERROR_NONE:
-            echo ' - No errors';
-        break;
-    } */
+	{
+		case JSON_ERROR_DEPTH:
+			echo ' - Maximum stack depth exceeded';
+		break;
+		case JSON_ERROR_CTRL_CHAR:
+			echo ' - Unexpected control character found';
+		break;
+		case JSON_ERROR_SYNTAX:
+			echo ' - Syntax error, malformed JSON';
+		break;
+		case JSON_ERROR_NONE:
+			echo ' - No errors';
+		break;
+	} */
 
 	unset( $json );
 	unset( $data );

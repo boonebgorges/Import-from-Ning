@@ -734,21 +734,23 @@ function bp_ning_import_get_discussions() {
 	// Get list of Ning groups for cross reference
 	$groups = bp_ning_import_prepare_json( 'groups' );
 
-	if ( !$ning_group_id_array = get_option( 'bp_ning_group_array' ) )
-		$ning_group_id_array = array();
-
+	$ning_group_id_array = get_option( 'bp_ning_group_array', array() );
 	$discussions = bp_ning_import_prepare_json( 'discussions' );
-
-	//do_action( 'bbpress_init' );
+	//delete_option('bp_ning_discussions_imported');
+	$imported = get_option( 'bp_ning_discussions_imported', array() );
 
 	$counter = 0;
-	$what = 0;
+
 	foreach ( (array)$discussions as $discussion_key => $discussion ) {
 		unset( $topic_id );
 
-		if ( $counter >= 4 ) {
-			echo "<h3>Refresh to continue</h3>";
-			die();
+		if ( isset( $imported[ $discussion->id ] ) )
+			continue;
+
+		if ( $counter >= 10 ) {
+			update_option( 'bp_ning_discussions_imported', $imported );
+			printf( __( '%d out of %d discussions done.' ), count($imported), count($discussions) );
+			return false;
 		}
 
 		$slug = sanitize_title( esc_attr( $discussion->category ) );
@@ -773,9 +775,7 @@ function bp_ning_import_get_discussions() {
 		} else {
 			continue; // todo fix me!
 		}
-
-		// Let's handle inline images!!!1!1! ROFLMAO
-		$discussion->description = bp_ning_import_process_inline_images( $discussion->description, 'discussions' );
+		$group = new BP_Groups_Group( $group_id );
 
 		$args = array(
 			'topic_title' => $discussion->title,
@@ -796,7 +796,8 @@ function bp_ning_import_get_discussions() {
 		$topic_exists = $wpdb->get_results( $q );
 
 		if ( isset( $topic_exists[0] ) ) {
-			//echo "<em>- Topic $discussion->title already exists</em><br />";
+			echo "<em>- Topic $discussion->title already exists</em><br />";
+			$imported[$discussion->id] = true;
 			continue;
 		}
 
@@ -804,22 +805,24 @@ function bp_ning_import_get_discussions() {
 			{ echo "No forum id - skipping"; continue; }
 
 		if ( !$topic_id = bp_forums_new_topic( $args ) ) {
+			// TODO: WTF?
+			return false;
+
 			echo "<h2>Refresh to import more discussions</h2>";
 			die();
 		} else {
+			bp_ning_import_process_inline_images_new( 'discussions', $topic_id, 'topic' );
 			echo "<strong>- Created topic: $discussion->title</strong><br />";
 		}
 
+		$activity_content = bp_create_excerpt( $discussion->description );
 		$skip_activity = get_option( 'bp_ning_skip_forum_activity' );
 
 		if ( !$skip_activity ) {
 			$topic = bp_forums_get_topic_details( $topic_id );
 
-			$group = new BP_Groups_Group( $group_id );
-
 			// Activity item
-			$activity_action = sprintf( __( '%s started the forum topic %s in the group %s:', 'buddypress'), bp_core_get_userlink( $creator_id ), '<a href="' . bp_get_group_permalink( $group ) . 'forum/topic/' . $topic->topic_slug .'/">' . attribute_escape( $topic->topic_title ) . '</a>', '<a href="' . bp_get_group_permalink( $group ) . '">' . attribute_escape( $group->name ) . '</a>' );
-			$activity_content = bp_create_excerpt( $topic_text );
+			$activity_action = sprintf( __( '%s started the forum topic %s in the group %s:', 'buddypress'), bp_core_get_userlink( $creator_id ), '<a href="' . bp_get_group_permalink( $group ) . 'forum/topic/' . $topic->topic_slug .'/">' . esc_html( $topic->topic_title ) . '</a>', '<a href="' . bp_get_group_permalink( $group ) . '">' . esc_html( $group->name ) . '</a>' );
 
 			groups_record_activity( array(
 				'user_id' => $creator_id,
@@ -846,8 +849,6 @@ function bp_ning_import_get_discussions() {
 				$ndate = strtotime( $reply->createdDate );
 				$date_created = date( "Y-m-d H:i:s", $ndate );
 
-				$reply->description = bp_ning_import_process_inline_images( $reply->description, 'discussions' );
-
 				$args = array(
 					'topic_id' => $topic_id,
 					'post_text' => $reply->description,
@@ -865,8 +866,11 @@ function bp_ning_import_get_discussions() {
 
 				$post_id = bp_forums_insert_post( $args );
 
-				if ( $post_id )
-					echo "<strong>- Imported forum post: $reply->description</strong><br />";
+				if ( $post_id ) {
+					bp_ning_import_process_inline_images_new( 'discussions', $post_id, 'topic_reply' );
+					$import_summary = esc_html( bp_create_excerpt($reply->description, 100, array('html' => false)) );
+					echo "<em>- Imported forum post: $import_summary</em><br />";
+				}
 
 
 				if ( !groups_is_user_member( $creator_id, $group_id ) ) {
@@ -897,12 +901,12 @@ function bp_ning_import_get_discussions() {
 				// Activity item
 				$topic = bp_forums_get_topic_details( $topic_id );
 
-				$activity_action = sprintf( __( '%s posted on the forum topic %s in the group %s:', 'buddypress'), bp_core_get_userlink( $creator_id ), '<a href="' . bp_get_group_permalink( $group_id ) . 'forum/topic/' . $topic->topic_slug .'/">' . attribute_escape( $topic->topic_title ) . '</a>', '<a href="' . bp_get_group_permalink( $group ) . '">' . attribute_escape( $group->name ) . '</a>' );
+				$activity_action = sprintf( __( '%s posted on the forum topic %s in the group %s:', 'buddypress'), bp_core_get_userlink( $creator_id ), '<a href="' . bp_get_group_permalink( $group ) . 'forum/topic/' . $topic->topic_slug .'/">' . esc_attr( $topic->topic_title ) . '</a>', '<a href="' . bp_get_group_permalink( $group ) . '">' . esc_attr( $group->name ) . '</a>' );
 				$activity_content = bp_create_excerpt( $reply->description );
 				$primary_link = bp_get_group_permalink( $group ) . 'forum/topic/' . $topic->topic_slug . '/';
 
-				if ( $page )
-					$primary_link .= "?topic_page=" . $page;
+				//if ( $page )
+				//	$primary_link .= "?topic_page=" . $page;
 				//echo $primary_link; die();
 
 				groups_record_activity( array(
@@ -921,12 +925,12 @@ function bp_ning_import_get_discussions() {
 			}
 		}
 
-		unset( $discussions[$discussion_key] );
+		$imported[$discussion->id] = true;
+		$counter++;
 	}
 
-	unset( $discussions );
-
-
+	update_option( 'bp_ning_discussions_imported', $imported );
+	return true;
 }
 
 function bp_ning_import_get_blogs() {

@@ -1398,15 +1398,27 @@ function bp_ning_import_members_markup() {
 
 		<p><?php _e( 'You will have a chance later on to email new members with their login information.', 'bp-ning-import' ) ?></p>
 
+		<?php if ( !empty( $member_id_array['refresh'] ) ) : ?>
+			<p><strong><?php _e( 'User importing is not yet complete. Review the imported members below and continue when ready.', 'bp-ning-import' ) ?></strong></p>
 
-		<div class="submit">
-			<form method="post" action="">
-				<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
-				<input type="hidden" id="current_step" name="current_step" value="profiles">
-			</form>
-		</div>
+			<div class="submit">
+				<form method="post" action="">
+					<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
+					<input type="hidden" id="current_step" name="current_step" value="members">
+				</form>
+			</div>
+		<?php else: ?>
+			<p><strong><?php _e( 'All members are now imported. Review the imported members below and continue to import profile data.', 'bp-ning-import' ) ?></strong></p>
 
-		<table id="ning-import-users">
+			<div class="submit">
+				<form method="post" action="">
+					<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
+					<input type="hidden" id="current_step" name="current_step" value="profiles">
+				</form>
+			</div>
+		<?php endif; ?>
+
+		<table id="ning-import-users" class="widefat">
 
 		<tr>
 			<th><?php _e( 'User ID' ) ?></th>
@@ -1419,7 +1431,7 @@ function bp_ning_import_members_markup() {
 		<?php foreach( (array)$member_id_array['success'] as $bp_member ) : ?>
 			<tr>
 				<td><?php echo $bp_member['id'] ?></td>
-				<td><?php echo $bp_member['user_name'] ?></td>
+				<td><?php echo esc_html($bp_member['display_name']) ?></td>
 				<td><?php echo $bp_member['user_login'] ?></td>
 				<td><?php echo $bp_member['user_email'] ?></td>
 			</tr>
@@ -1431,7 +1443,7 @@ function bp_ning_import_members_markup() {
 		<p><?php _e( 'Sorry, I was unable to create any accounts.', 'bp-ning-import' ) ?></p>
 
 	<?php endif; ?>
-<?
+<?php
 }
 
 function bp_ning_import_profiles_markup() {

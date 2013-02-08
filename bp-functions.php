@@ -346,59 +346,77 @@ function bp_ning_import_get_profile_fields() {
 
 function bp_ning_import_process_profiles() {
 
-	$ning_id_array = get_option( 'bp_ning_user_array', $ning_id_array );
+	$ning_id_array = get_option( 'bp_ning_user_array', array() );
 
-	if ( empty( $_POST['pf'] ) )
-		return;
+	$field_key = get_option( 'bp_ning_profile_mapping', array() );
 
-	$fields = $_POST['pf'];
+	if ( empty( $_POST['pf'] ) && empty( $field_key ) )
+		return true;
 
-	// Keep track of renamed fields
-	$field_key = array();
-	foreach( (array)$fields as $key => $field ) {
+	if ( empty( $field_key ) ) {
+		$fields = $_POST['pf'];
 
-		// Check to see if the user provided an alternative name for the field
-		if ( $_POST['pfn'][$key] ) {
-			$newfield = $_POST['pfn'][$key];
-			$fields[$key] = $newfield;
-			$field_key[$field] = $newfield;
-		} else {
-			$field_key[$field] = $field;
-			$newfield = $field;
+		// Keep track of renamed fields
+		foreach( (array)$fields as $key => $field ) {
+
+			// Check to see if the user provided an alternative name for the field
+			if ( $_POST['pfn'][$key] ) {
+				$newfield = $_POST['pfn'][$key];
+				$fields[$key] = $newfield;
+				$field_key[$field] = $newfield;
+			} else {
+				$field_key[$field] = $field;
+				$newfield = $field;
+			}
+
+			// Create the field
+			$args = array(
+				'field_group_id' => 1,
+				'name' => $newfield,
+				'type' => 'textbox',
+				'is_required' => false
+				);
+
+			if ( !xprofile_get_field_id_from_name( $newfield ) ) {
+				xprofile_insert_field( $args );
+			}
+
 		}
 
-		// Create the field
-		$args = array(
-			'field_group_id' => 1,
-			'name' => $newfield,
-			'type' => 'textbox',
-			'is_required' => false
-			);
+		// Get the field ids for the just-created fields. Todo: patch the core so that xprofile_insert_field() returns the id
 
-		if ( !xprofile_get_field_id_from_name( $newfield ) ) {
-			xprofile_insert_field( $args );
+		foreach( (array)$fields as $field ) {
+			$field_ids[$field] = xprofile_get_field_id_from_name( $field );
 		}
 
-	}
-
-	// Get the field ids for the just-created fields. Todo: patch the core so that xprofile_insert_field() returns the id
-
-	foreach( (array)$fields as $field ) {
-		$field_ids[$field] = xprofile_get_field_id_from_name( $field );
+		update_option( 'bp_ning_profile_mapping', $field_key );
 	}
 
 	// Populate the new fields
 	$members = bp_ning_import_prepare_json( 'members' );
 
-	foreach( (array)$members as $member ) {
+	$imported = get_option( 'bp_ning_profiles_imported', array() );
+	$counter = 0;
+
+	foreach ( (array) $members as $member ) {
 		$member = (array)$member;
 
 		$ncommented_id = $member['contributorName'];
+
+		if (isset($imported[$ncommented_id]))
+			continue;
+
+		if ( $counter >= 600 ) {
+			update_option('bp_ning_profiles_imported', $imported);
+			printf( __( '%d out of %d member profiles done.' ), count($imported), count($members) );
+			return false;
+		}
+
 		$commented_id = $ning_id_array[$ncommented_id];
 		$commented_username = bp_core_get_username( $commented_id );
 
 		// Create @replies for all comments
-		if ( isset( $member['comments'] ) && !get_user_meta( $commented_id, 'ning_comments_imported' ) ) {
+		if ( isset( $member['comments'] ) && !get_user_meta( $commented_id, 'ning_comments_imported' ) && function_exists('bp_activity_at_name_filter') ) {
 			global $bp;
 
 			$comments = $member['comments'];
@@ -460,7 +478,7 @@ function bp_ning_import_process_profiles() {
 
 				$bp_field_name = $field_key[$key];
 
-				$user = get_user_by_email( $member['email'] );
+				$user = get_user_by( 'email', $member['email'] );
 
 				if ( !xprofile_get_field_data( $bp_field_name, $user->ID ) ) {
 					xprofile_set_field_data( $bp_field_name, $user->ID, $value );
@@ -469,10 +487,13 @@ function bp_ning_import_process_profiles() {
 		}
 
 		update_user_meta( $commented_id, 'ning_profile_imported', 1 );
-
+		$counter++;
+		$imported[$ncommented_id] = true;
 	}
+	update_option('bp_ning_profiles_imported', $imported);
 
 	unset( $members );
+	return true;
 }
 
 

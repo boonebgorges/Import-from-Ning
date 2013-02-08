@@ -1542,16 +1542,24 @@ function bp_ning_import_groups_markup() {
 
 		<p><?php _e( 'Once you\'ve imported all your groups, click Continue at the bottom of the page to move on to the next step.', 'bp-ning-import' ) ?></p>
 
-	<?php $groups = bp_ning_import_get_groups(); ?>
+	<?php
+	$groups = bp_ning_import_get_groups();
+
+	if ( ! $groups ): ?>
+
+		<p><strong><?php _e('Refresh to continue!', 'bp-ning-import') ?></strong></p>
+
+	<?php else: ?>
 
 	<div class="submit">
 			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
-			<input type="hidden" id="current_step" name="current_step" value="groups_done" />
+			<input type="hidden" id="current_step" name="current_step" value="discussion_groups" />
 	</div>
+	<?php endif; ?>
 
 	</form>
 
-<?
+<?php
 }
 
 function bp_ning_import_discussion_groups_markup() {

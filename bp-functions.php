@@ -667,8 +667,7 @@ function bp_ning_import_get_discussion_groups() {
 	// Get list of Ning groups for cross reference
 	$groups = bp_ning_import_prepare_json( 'groups' );
 
-	if ( !$ning_group_id_array = get_option( 'bp_ning_group_array' ) )
-		$ning_group_id_array = array();
+	$ning_group_id_array = get_option( 'bp_ning_group_array', array() );
 
 	// Loop through each discussion. If the topic doesn't have a corresponding group, create one. Then insert the forum items.
 
@@ -677,6 +676,10 @@ function bp_ning_import_get_discussion_groups() {
 	$counter = 0;
 	foreach ( (array)$discussions as $discussion_key => $discussion ) {
 		if ( !isset( $discussion->category ) )
+			continue;
+
+		$ning_group_id = $discussion->category;
+		if ( isset( $ning_group_id_array[$ning_group_id] ) )
 			continue;
 
 		// todo - what if a topic has no group and no category
@@ -709,10 +712,14 @@ function bp_ning_import_get_discussion_groups() {
 				groups_new_group_forum( $group_id, $discussion->category, $discussion->category );
 				echo "<strong>Created group: $discussion->category</strong><br />";
 
-				$ning_group_id = $discussion->category;
 				$ning_group_id_array[$ning_group_id] = $group_id;
 				update_option( 'bp_ning_group_array', $ning_group_id_array );
 			}
+		}
+		else {
+			echo "<strong>Group already exists: $discussion->category</strong><br />";
+			$ning_group_id_array[$ning_group_id] = $group_id;
+			update_option( 'bp_ning_group_array', $ning_group_id_array );
 		}
 	}
 }

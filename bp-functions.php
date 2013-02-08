@@ -122,27 +122,44 @@ function bp_ning_import_prepare_json( $type, $local = true ) {
 
 function bp_ning_import_create_user( $userdata ) {
 	global $wpdb;
+	$email = preg_replace('#(@.*)/#i', '$1', $userdata->email);
 
+	// Check for existing member
+	if ( $user = get_user_by( 'email', $email ) ) {
+		$bp_member = array();
+		$bp_member['user_login'] = $user->user_login;
+		$bp_member['user_name'] = $user->user_name;
+		$bp_member['user_email'] = $user->user_email;
+		$bp_member['display_name'] = $user->display_name;
+		$bp_member['id'] = $user->ID;
+		$bp_member['already_exists'] = 1;
+		return $bp_member;
+	}
 
 	$username = strtolower( preg_replace( "/\s+/", '', $userdata->fullName ) );
 	$username = str_replace( '@', '', $username );
 	$username = str_replace( '.', '', $username );
 	$username = str_replace( ')', '', $username );
 	$username = str_replace( '(', '', $username );
+	$username = str_replace( "'", '', $username );
+	$username = str_replace( ':', '', $username );
 
 	$username = preg_replace("/[^\x9\xA\xD\x20-\x7F]/", "", $username);
 	$table = array(
-        'Š'=>'S', 'š'=>'s', 'Đ'=>'Dj', 'đ'=>'dj', 'Ž'=>'Z', 'ž'=>'z', 'Č'=>'C', 'č'=>'c', 'Ć'=>'C', 'ć'=>'c',
-        'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
-        'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O',
-        'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U', 'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss',
-        'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c', 'è'=>'e', 'é'=>'e',
-        'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o',
-        'ô'=>'o', 'õ'=>'o', 'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'ý'=>'y', 'þ'=>'b',
-        'ÿ'=>'y', 'Ŕ'=>'R', 'ŕ'=>'r',
-    );
+		'Š'=>'S', 'š'=>'s', 'Đ'=>'Dj', 'đ'=>'dj', 'Ž'=>'Z', 'ž'=>'z', 'Č'=>'C', 'č'=>'c', 'Ć'=>'C', 'ć'=>'c',
+		'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
+		'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O',
+		'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U', 'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss',
+		'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c', 'è'=>'e', 'é'=>'e',
+		'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o',
+		'ô'=>'o', 'õ'=>'o', 'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'ý'=>'y', 'þ'=>'b',
+		'ÿ'=>'y', 'Ŕ'=>'R', 'ŕ'=>'r',
+	);
 
-    $username = strtr($username, $table);
+	$username = strtr($username, $table);
+
+	if ( empty( $username ) )
+		$username = 'unnamed';
 
 	// Autogenerates username by adding an integer to the end of it
 	if ( username_exists( $username ) ) {
@@ -156,37 +173,30 @@ function bp_ning_import_create_user( $userdata ) {
 	$password = substr(md5(uniqid(microtime())), 0, 7);
 
 	$bp_member = array(
-		"user_email" => $userdata->email,
+		"user_email" => $email,
 		"user_name" => $userdata->fullName,
 		"already_exists" => 0
 	);
 
+	// create user
+	$args = array(
+		"user_login" => $username,
+		"display_name" => $userdata->fullName,
+		"nickname" => $userdata->fullName,
+		"user_pass" => $password,
+		"user_email" => $email
+	);
 
-	// Check for existing member
-	if ( $user = get_user_by_email( $userdata->email ) ) {
-
-		$bp_member['user_login'] = $user->user_login;
-		$bp_member['id'] = $user->ID;
-		$bp_member['already_exists'] = 1;
-		return $bp_member;
-
-	} else {
-
-		// create user
-		$args = array(
-			"user_login" => $username,
-			"display_name" => $userdata->fullName,
-			"nickname" => $userdata->fullName,
-			"user_pass" => $password,
-			"user_email" => $userdata->email
-		);
-
-		$bp_member['id'] = wp_insert_user( $args );
-		$bp_member['user_login'] = $username;
-		$bp_member['password'] = $password;
-
-		echo "<br />" . $bp_member['id'] . ") $userdata->fullName created";
+	$bp_member['id'] = wp_insert_user( $args );
+	if ( is_wp_error($bp_member['id']) ) {
+		var_dump($username, $userdata, $bp_member['id']);
+		die();
 	}
+	$bp_member['user_login'] = $username;
+	$bp_member['display_name'] = $userdata->fullName;
+	$bp_member['password'] = $password;
+
+	#echo "<br />" . $bp_member['id'] . ") $userdata->fullName created";
 
 	$f = explode( "?", $userdata->profilePhoto );
 	$g = explode( "members/", $f[0] );

@@ -1729,7 +1729,7 @@ The folks at $blogname";
 
 	<p><strong>Don't want to send out an email yet?</strong> Want to take a minute to look around the site first? No problem - just visit the Dashboard > BuddyPress > Import from Ning page at any time in the future. The plugin will remember that you've already imported your content and bring you directly to this screen, so that you can send the notification email to your members.</p>
 
-	<p>In the box below, you'll find some suggested text for the email. Feel free to modify it to suit your needs, but <strong>make sure you include %USERNAME% and %PASSWORD% somewhere in the text</strong>. The plugin will replace <strong>%USERDATA%</strong> and <strong>%PASSWORD%</strong> with the username and password of the recipient. Without this information, new users won't be able to log in.</p>
+	<p>In the box below, you'll find some suggested text for the email. Feel free to modify it to suit your needs, but <strong>make sure you include %USERNAME% and %PASSWORD% somewhere in the text</strong>. The plugin will replace <strong>%USERNAME%</strong> and <strong>%PASSWORD%</strong> with the username and password of the recipient. Without this information, new users won't be able to log in.</p>
 
 	<table class="form-table">
 
@@ -1745,11 +1745,11 @@ The folks at $blogname";
 
 	</table>
 
-	<p>When you click on Continue, emails will be sent to the addresses listed below. <strong>Warning:</strong> Sending thousands of emails at the same time might get you marked as spam by some ISPs. If you've got many hundreds of members, you might consider letting them know manually. They can get their login name and password by using the "Forgot your password?" link on <a href="<?php echo bp_root_domain() ?>/wp-login.php?action=lostpassword">the Lost Password</a> page.</p>
+	<p>When you click on Send Emails, emails will be sent to the addresses listed below. <strong>Warning:</strong> Sending thousands of emails at the same time might get you marked as spam by some ISPs. If you've got many hundreds of members, you might consider letting them know manually. They can get their login name and password by using the "Forgot your password?" link on <a href="<?php echo bp_root_domain() ?>/wp-login.php?action=lostpassword">the Lost Password</a> page.</p>
 
 
 	<div class="submit">
-			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
+			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Send Emails' ) ?>">
 			<input type="hidden" id="current_step" name="current_step" value="send_email" />
 	</div>
 

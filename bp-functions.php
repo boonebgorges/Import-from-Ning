@@ -1869,5 +1869,3 @@ function bp_ning_import_donate_message() {
 
 <?php
 }
-
-?>

@@ -1581,12 +1581,12 @@ function bp_ning_import_discussion_groups_markup() {
 
 	<div class="submit">
 			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
-			<input type="hidden" id="current_step" name="current_step" value="discussion_groups_done" />
+			<input type="hidden" id="current_step" name="current_step" value="discussions" />
 	</div>
 
 	</form>
 
-<?
+<?php
 }
 
 

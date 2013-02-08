@@ -584,8 +584,10 @@ function bp_ning_import_get_groups() {
 	// Get list of Ning groups for cross reference
 	$groups = bp_ning_import_prepare_json( 'groups' );
 
-	if ( !$ning_group_id_array = get_option( 'bp_ning_group_array' ) )
-		$ning_group_id_array = array();
+	if ( ! $groups )
+		return true;
+
+	$ning_group_id_array = get_option( 'bp_ning_group_array', array() );
 
 	$counter = 0;
 	foreach ( (array)$groups as $group_key => $group ) {
@@ -593,8 +595,7 @@ function bp_ning_import_get_groups() {
 		if ( $counter >= 30 ) {
 			update_option( 'bp_ning_group_array', $ning_group_id_array );
 
-			echo "<h3>Refresh to continue</h3>";
-			die();
+			return false;
 		}
 
 		// Create the group
@@ -623,7 +624,7 @@ function bp_ning_import_get_groups() {
 			if ( $group_id = groups_create_group( $args ) ) {
 				groups_update_groupmeta( $group_id, 'last_activity', $date_created );
 				groups_update_groupmeta( $group_id, 'total_member_count', 1 );
-				
+
 				if ( bp_is_active( 'forums' ) ) {
 					groups_new_group_forum( $group_id, $group->title, $group->description );
 					echo "$group_key) <strong>Created group: $group->title</strong><br />";
@@ -653,6 +654,8 @@ function bp_ning_import_get_groups() {
 	update_option( 'bp_ning_group_array', $ning_group_id_array );
 
 	unset( $groups );
+
+	return true;
 }
 
 

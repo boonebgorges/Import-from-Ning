@@ -1260,6 +1260,36 @@ function bp_ning_import_intro_markup() {
 				</form>
 			</div>
 
+			<p><?php _e( 'Did something break half way through? You can always start over.', 'bp-ning-import' ) ?></p>
+
+			<form method="post" action="">
+
+			<div class="submit">
+				<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Jump to Step' ) ?>">
+				<label for="current_step">Jump to</label>
+				<select id="current_step" name="current_step">
+					<option value="members">Members</option>
+					<option value="profiles">Profiles</option>
+					<option value="groups">Groups</option>
+					<option value="discussion_groups">Discussion Groups</option>
+					<option value="discussions">Discussions</option>
+					<option value="blogs">Blog Posts</option>
+					<option value="events">Events</option>
+					<option value="finished">Send Email</option>
+				</select>
+			</div>
+
+			</form>
+
+			<form method="post" action="">
+
+			<div class="submit">
+				<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Start Over' ) ?>">
+				<input type="hidden" id="current_step" name="current_step" value="start_over">
+			</div>
+
+			</form>
+
 		<?php else : ?>
 
 			<h3><?php _e( 'Houston, we have a problem', 'bp-ning-import' ) ?></h3>
@@ -1278,15 +1308,25 @@ function bp_ning_import_intro_markup() {
 
 		<p>If you're ready to send out notifications, click Continue. You'll be taken to a screen where you can customize the content of the notification email before it's sent.</p>
 
-		<p>Or, if you'd like, you can start over with the import process.</p>
+		<p>You can also import just the new content since the last import. Or, if you'd like, you can start over with the import process.</p>
 
 		<p>What do you want to do?</p>
 
 		<form method="post" action="">
 
 		<div class="submit">
-			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
-			<input type="hidden" id="current_step" name="current_step" value="blogs_done">
+			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Import New Content' ) ?>">
+			<label for="current_step">Jump to</label>
+			<select id="current_step" name="current_step">
+				<option value="members">Members</option>
+				<option value="profiles">Profiles</option>
+				<option value="groups">Groups</option>
+				<option value="discussion_groups">Discussion Groups</option>
+				<option value="discussions">Discussions</option>
+				<option value="blogs">Blog Posts</option>
+				<option value="events">Events</option>
+				<option value="finished">Send Email</option>
+			</select>
 		</div>
 
 		</form>
@@ -1300,7 +1340,6 @@ function bp_ning_import_intro_markup() {
 
 		</form>
 
-
 	<?php else : ?>
 		<h3>Hey!</h3>
 
@@ -1308,15 +1347,25 @@ function bp_ning_import_intro_markup() {
 
 		<p>If you want to go back to the final screen of the import process, where you can see a list of plugins available for BuddyPress, click Continue.</p>
 
-		<p>Or, if you'd like, you can start over with the import process.</p>
+		<p>You can also import just the new content since the last import. Or, if you'd like, you can start over with the import process.</p>
 
 		<p>What do you want to do?</p>
 
 		<form method="post" action="">
 
 		<div class="submit">
-			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
-			<input type="hidden" id="current_step" name="current_step" value="send_email">
+			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Import New Content' ) ?>">
+			<label for="current_step">Jump to</label>
+			<select id="current_step" name="current_step">
+				<option value="members">Members</option>
+				<option value="profiles">Profiles</option>
+				<option value="groups">Groups</option>
+				<option value="discussion_groups">Discussion Groups</option>
+				<option value="discussions">Discussions</option>
+				<option value="blogs">Blog Posts</option>
+				<option value="events">Events</option>
+				<option value="finished">Send Email</option>
+			</select>
 		</div>
 
 		</form>
@@ -1334,7 +1383,7 @@ function bp_ning_import_intro_markup() {
 	<?php endif; ?>
 
 
-<?
+<?php
 }
 
 

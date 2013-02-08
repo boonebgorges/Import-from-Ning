@@ -1497,27 +1497,38 @@ function bp_ning_import_profiles_markup() {
 
 	</form>
 
-<?
+<?php
 }
 
 function bp_ning_import_profile_two_markup() {
 ?>
 	<h3><?php _e( 'Profile fields', 'bp-ning-import' ) ?></h3>
 
-	<p>Importing your user profile data and profile comments. If the page times out and you don't see a Continue button, hit Refresh.</p>
+	<p>Importing your user profile data and profile comments.</p>
 
-	<?php bp_ning_import_process_profiles() ?>
+	<?php $done = bp_ning_import_process_profiles() ?>
 
-	<p><?php _e( 'Profile data successfully imported! Click Continue to continue the import process.', 'bp-ning-import' ) ?></p>
+	<?php if ( $done ): ?>
+		<p><?php _e( 'Profile data <strong>successfully imported</strong>! Click Continue to continue the import process.', 'bp-ning-import' ) ?></p>
 
-	<div class="submit">
-		<form method="post" action="">
-			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
-			<input type="hidden" id="current_step" name="current_step" value="groups" />
-		</form>
-	</div>
+		<div class="submit">
+			<form method="post" action="">
+				<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
+				<input type="hidden" id="current_step" name="current_step" value="groups" />
+			</form>
+		</div>
+	<?php else: ?>
+		<p><?php _e( 'Profile data <strong>not yet finished</strong> importing. Click Continue to continue the importing profile data.', 'bp-ning-import' ) ?></p>
 
-<?
+		<div class="submit">
+			<form method="post" action="">
+				<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
+				<input type="hidden" id="current_step" name="current_step" value="profiles_done" />
+			</form>
+		</div>
+	<?php endif; ?>
+
+<?php
 }
 
 

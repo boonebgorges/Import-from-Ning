@@ -1773,16 +1773,47 @@ function bp_ning_import_sent_email_markup() {
 	if ( !get_option( 'bp_ning_emails_sent' ) ) {
 
 		$users = get_option( 'bp_ning_import_users' );
+		$emails_sent_to = get_option( 'bp_ning_emails_sent_to', array() );
 
-		$subject = stripslashes( $_POST['email-subject'] );
-		$email_text = stripslashes( $_POST['email-text'] );
+		if (isset($_POST['email-subject']))
+			update_option( 'bp_ning_import_email_subject', stripslashes( $_POST['email-subject'] ) );
+		if (isset($_POST['email-text']))
+			update_option( 'bp_ning_import_email_text', stripslashes( $_POST['email-text'] ) );
+
+		$subject = get_option( 'bp_ning_import_email_subject' );
+		$email_text = get_option( 'bp_ning_import_email_text' );
+
+		$counter = 0;
 
 		foreach ( (array)$users['success'] as $user ) {
 			$to = $user['user_email'];
+			if ( isset( $emails_sent_to[ $to ] ) ) {
+				continue;
+			}
+
+			if ( $counter >= 100 ) {
+?>
+			<h3><?php _e('Sending Emails', 'bp-ning-import') ?></h3>
+			<p>Sent emails to <?php echo count($emails_sent_to) ?> out of <?php echo count($users['success']) ?> users.</p>
+
+			<form method="post" action="">
+				<div class="submit">
+						<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue Sending' ) ?>">
+						<input type="hidden" id="current_step" name="current_step" value="send_email" />
+				</div>
+			</form>
+<?php
+				return;
+			}
+
 			$message = str_replace( "%USERNAME%", $user['user_login'], $email_text );
 			$message = str_replace( "%PASSWORD%", $user['password'], $message );
 
 			wp_mail( $to, $subject, $message );
+
+			$emails_sent_to[ $to ] = true;
+			update_option( 'bp_ning_emails_sent_to', $emails_sent_to );
+			$counter++;
 		}
 
 		update_option( 'bp_ning_emails_sent', 1 );

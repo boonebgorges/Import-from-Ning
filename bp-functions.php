@@ -1222,6 +1222,7 @@ function bp_ning_import_intro_markup() {
 			<li>Miscellaneous discussions</li>
 			<li>Blogs</li>
 			<li>Pages</li>
+			<li>Events</li>
 		</ul>
 
 		<p>At this time, the plugin does <em>not</em> import the following:</p>
@@ -1231,7 +1232,6 @@ function bp_ning_import_intro_markup() {
 			<li>Videos</li>
 			<li>Music</li>
 			<li>Notes</li>
-			<li>Events</li>
 		</ul>
 
 		<p>These latter items are not supported by BuddyPress without the use of plugins. At the end of the import process, you'll see a list of plugins that might help you to manage some of the items that the importer can't handle.</li>

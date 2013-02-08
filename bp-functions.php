@@ -39,19 +39,23 @@ function bp_ning_import_steps() {
 			bp_ning_import_groups_markup();
 			break;
 
-		case 'groups_done' :
+		case 'discussion_groups' :
 			bp_ning_import_discussion_groups_markup();
 			break;
 
-		case 'discussion_groups_done' :
+		case 'discussions' :
 			bp_ning_import_discussions_markup();
 			break;
 
-		case 'discussions_done' :
+		case 'blogs' :
 			bp_ning_import_blogs_markup();
 			break;
 
-		case 'blogs_done' :
+		case 'events' :
+			bp_ning_import_events_markup();
+			break;
+
+		case 'finished' :
 			bp_ning_import_finished_markup();
 			break;
 
@@ -60,12 +64,16 @@ function bp_ning_import_steps() {
 			break;
 
 		case 'start_over' :
-			delete_option( 'bp_ning_left_off' );
 			delete_option( 'bp_ning_group_array' );
 			delete_option( 'bp_ning_import_users' );
 			delete_option( 'bp_ning_user_array' );
 			delete_option( 'bp_ning_import_finished' );
 			delete_option( 'bp_ning_emails_sent' );
+			delete_option( 'bp_ning_profiles_imported' );
+			delete_option( 'bp_ning_profile_mapping' );
+			delete_option( 'bp_ning_discussions_imported' );
+			delete_option( 'bp_ning_events_imported' );
+			delete_option( 'bp_ning_emails_sent_to' );
 			bp_ning_import_members_markup();
 			break;
 	}

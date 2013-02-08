@@ -1649,6 +1649,37 @@ function bp_ning_import_blogs_markup() {
 <?php
 }
 
+function bp_ning_import_events_markup() {
+?>
+	<form method="post" action="">
+
+		<h3><?php _e( 'Eventss', 'bp-ning-import' ) ?></h3>
+
+		<p><?php _e( 'Import from Ning is looking for events to import.', 'bp-ning-import' ) ?></p>
+
+
+	<?php $done = bp_ning_import_get_events(); ?>
+
+	<?php if ($done): ?>
+		<p><?php _e( 'Events are <strong>finished</strong> importing. Hit Continue to wrap up.', 'bp-ning-import' ) ?></p>
+
+		<div class="submit">
+				<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
+				<input type="hidden" id="current_step" name="current_step" value="finished" />
+		</div>
+	<?php else: ?>
+		<p><?php _e( 'Events are <strong>not yet finished</strong> importing. Hit Continue to continue importing events.', 'bp-ning-import' ) ?></p>
+
+		<div class="submit">
+				<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
+				<input type="hidden" id="current_step" name="current_step" value="events" />
+		</div>
+	<?php endif; ?>
+
+	</form>
+
+<?php
+}
 
 function bp_ning_import_finished_markup() {
 	update_option( 'bp_ning_import_finished', 1 );

@@ -497,58 +497,84 @@ function bp_ning_import_process_profiles() {
 }
 
 
-function bp_ning_import_process_inline_images( $text, $type ) {
+function bp_ning_import_process_inline_images_new( $type, $post_ID, $post_type = 'post' ) {
+	switch ($post_type) {
+		case 'post':
+			$post = get_post( $post_ID );
+			$text = $post->post_content;
+			break;
+		case 'topic':
+			$topic = bb_get_first_post( $post_ID );
+			$post_ID = (int) $topic->post_id;
+			$text = $topic->post_text;
+			break;
+		case 'topic_reply':
+			$reply = bb_get_post( $post_ID );
+			$text = $reply->post_text;
+			break;
+		case 'comment':
+			$comment = get_comment( $post_ID );
+			$text = $comment->comment_content;
+			break;
+	}
+	$ning_dir = content_url( '/ning-files/' );
+	$real_images = array();
+
 	// Only worry about local images
-	if ( strpos( $text, 'img src="' . $type ) ) {
-		$images = array();
-		$b = explode( 'img src="' . $type . '/', $text );
-		foreach ( $b as $c ) {
-			if ( !preg_match( '/gif|jpg|jpeg|png|bmp/', $c ) )
-				continue;
-
-			$d = explode( '"', $c );
-
-			$i = explode( '?', $d[0] );
-
-			if ( strpos( $i[0], ' ' ) )
-				continue;
-
-			$images[] = $i[0];
-		}
-
-		$uploads = wp_upload_dir();
-
-		// Move the file to the uploads dir
-
-		$current_dir = WP_CONTENT_DIR . '/ning-files/' . $type . '/';
-
+	if ( preg_match_all( '#"(' . $type . '/.*?\.(?:gif|jpg|jpeg|png|bmp))(?:\?(?:[^"]*?))?"#', $text, $images ) ) {
 		// $images is an array of file names in import-from-ning/json/discussions. Move 'em
-		foreach ( $images as $image ) {
-			$new_filename = wp_unique_filename( $uploads['path'], $image, $unique_filename_callback );
-			$new_file = $uploads['path'] . "/$new_filename";
-			$image_path = $current_dir . $image;
+		foreach ( $images[1] as $image ) {
+			$real_name = bp_ning_real_image_name($image);
+			if ( !isset( $real_images[ $real_name ] ) ) {
+				$html = media_sideload_image( $ning_dir . $image, $post_ID );
+				if ( is_wp_error( $html ) )
+					continue;
 
-			if ( !file_exists( $new_filename ) )
-				continue;
-
-			copy( $image_path, $new_file );
-
-			// Borrowed some of this upload code from WP core
-			// Set correct file permissions
-			$stat = stat( dirname( $new_file ));
-			$perms = $stat['mode'] & 0000666;
-			@ chmod( $new_file, $perms );
-
-			// Compute the URL
-			$url = $uploads['url'] . "/$new_filename";
-
-			$text = str_replace( $type . '/' . $image, $url, $text );
+				preg_match("#<img src='(.*?)'#", $html, $matches);
+				$url = $real_images[ $real_name ] = $matches[1];
+			}
+			else {
+				$url = $real_images[ $real_name ];
+			}
+			$text = str_replace($image, $url, $text);
 		}
-
-		unset( $images );
+	}
+	else {
+		return;
 	}
 
-	return $text;
+	switch ($post_type) {
+		case 'post':
+			$args = array(
+				'ID' => $post_ID,
+				'post_content' => $text,
+			);
+			$args = add_magic_quotes( $args );
+			wp_update_post( $args );
+			break;
+		case 'topic':
+		case 'topic_reply':
+			$args = array(
+				'post_id' => $post_ID,
+				'post_text' => $text,
+			);
+			bb_insert_post( $args );
+			break;
+		case 'comment':
+			$args = array(
+				'comment_ID' => $post_ID,
+				'comment_content' => $text,
+			);
+			wp_update_comment( $args );
+			break;
+	}
+}
+
+
+function bp_ning_real_image_name( $image ) {
+	list( $type, $name ) = explode( '/', $image, 2 );
+	list( $ID, $name ) = explode( '-', $name, 2 );
+	return $type . '/' . $name;
 }
 
 

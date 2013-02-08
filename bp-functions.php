@@ -10,7 +10,7 @@ add_action( function_exists( 'is_network_admin' ) && is_multisite() ? 'network_a
 
 
 function bp_ning_import_style() {
-	wp_enqueue_style( 'invite-anyone-admin-css', WP_PLUGIN_URL . '/import-from-ning/style.css' );
+	wp_enqueue_style( 'ning-importer-admin-css', WP_PLUGIN_URL . '/import-from-ning/style.css' );
 }
 
 function bp_ning_import_steps() {
@@ -18,11 +18,15 @@ function bp_ning_import_steps() {
 	bp_ning_import_header_markup();
 
 	if ( !isset( $_POST['current_step'] ) )
-		bp_ning_import_intro_markup();
+		$current_step = 'intro';
 	else
 		$current_step = $_POST['current_step'];
 
 	switch( $current_step ) {
+		case 'intro':
+			bp_ning_import_intro_markup();
+			break;
+
 		case 'members' :
 			bp_ning_import_members_markup();
 			break;
@@ -134,7 +138,7 @@ function bp_ning_import_create_user( $userdata ) {
 		$bp_member['id'] = $user->ID;
 		$bp_member['already_exists'] = 1;
 		return $bp_member;
-	}
+	} 
 
 	$username = strtolower( preg_replace( "/\s+/", '', $userdata->fullName ) );
 	$username = str_replace( '@', '', $username );
@@ -257,54 +261,48 @@ function bp_ning_import_create_user( $userdata ) {
 
 // Step setup functions
 function bp_ning_import_get_members() {
-	if ( !$left_off = get_option( 'bp_ning_left_off' ) )
-		$left_off = -1;
-
 	$members = bp_ning_import_prepare_json( 'members' );
-	if ( !$member_id_array = get_option( 'bp_ning_import_users' ) )
-		$member_id_array = array();
+	$member_id_array = get_option( 'bp_ning_import_users', array() );
+	$ning_id_array = get_option( 'bp_ning_user_array', array() );
 
-	if ( !$ning_id_array = get_option( 'bp_ning_user_array' ) )
-		$ning_id_array = array();
-
-	echo "Importing users - this may take a while.<br />";
-	echo "If you see a Refresh message at the bottom of the page you'll need to refresh the page in order to continue importing.";
-
-	$counter = $left_off;
+	$counter = 0;
+	$done = array();
 
 	foreach ( (array)$members as $member_key => $member ) {
+		$ning_id = $member->contributorName;
+		if (isset($ning_id_array[$ning_id])) {
+			continue;
+		}
 
-		// echo "<br />$member_key";
-		//if ( $member_key < $left_off )
-		// 	continue;
-
-		/* if ( $counter % 200 == 0 && $counter != 0 ) {
-		 	echo "<h2>Refresh to continue importing users</h2>";
+		if ( $counter % 200 == 0 && $counter != 0 ) {
+		 	//echo "<h2>Refresh to continue importing users</h2>";
 		 	update_option( 'bp_ning_import_users', $member_id_array );
 			update_option( 'bp_ning_user_array', $ning_id_array );
-		 	die();
-		 } */
+
+		 	$done['refresh'] = true;
+
+		 	return $done;
+		 }
 
 		 $bp_member = bp_ning_import_create_user( $member );
 
-		 if ( isset( $bp_member['id'] ) )
-		 	$member_id_array['success'][] = $bp_member;
-		 else
-		 	$member_id_array['error'][] = $bp_member;
+		 if ( isset( $bp_member['id'] ) ) {
+		 	$done['success'][] = $member_id_array['success'][] = $bp_member;
+		 }
+		 else {
+		 	$done['error'][] = $member_id_array['error'][] = $bp_member;
+		 }
 
 		 // Create an array of Ning IDs for later reference
-		 $ning_id = $member->contributorName;
 		 $ning_id_array[$ning_id] = $bp_member['id'];
 
-		 //update_option( 'bp_ning_left_off', $member_key );
 		 $counter++;
 	}
 
 	update_option( 'bp_ning_import_users', $member_id_array );
 	update_option( 'bp_ning_user_array', $ning_id_array );
-	delete_option( 'bp_ning_left_off' );
 
-	return $member_id_array;
+	return $done;
 }
 
 function bp_ning_import_get_profile_fields() {
@@ -496,7 +494,6 @@ function bp_ning_import_process_profiles() {
 	return true;
 }
 
-
 function bp_ning_import_process_inline_images_new( $type, $post_ID, $post_type = 'post' ) {
 	switch ($post_type) {
 		case 'post':
@@ -624,7 +621,7 @@ function bp_ning_import_get_groups() {
 			if ( $group_id = groups_create_group( $args ) ) {
 				groups_update_groupmeta( $group_id, 'last_activity', $date_created );
 				groups_update_groupmeta( $group_id, 'total_member_count', 1 );
-
+				
 				if ( bp_is_active( 'forums' ) ) {
 					groups_new_group_forum( $group_id, $group->title, $group->description );
 					echo "$group_key) <strong>Created group: $group->title</strong><br />";
@@ -1146,6 +1143,7 @@ function bp_ning_import_get_events() {
 	return true;
 }
 
+
 function bp_ning_import_insert_post( $args = '' ) {
 	global $bp;
 
@@ -1649,6 +1647,7 @@ function bp_ning_import_blogs_markup() {
 <?php
 }
 
+
 function bp_ning_import_events_markup() {
 ?>
 	<form method="post" action="">
@@ -1680,6 +1679,7 @@ function bp_ning_import_events_markup() {
 
 <?php
 }
+
 
 function bp_ning_import_finished_markup() {
 	update_option( 'bp_ning_import_finished', 1 );

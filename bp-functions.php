@@ -10,7 +10,7 @@ add_action( function_exists( 'is_network_admin' ) && is_multisite() ? 'network_a
 
 
 function bp_ning_import_style() {
-	wp_enqueue_style( 'invite-anyone-admin-css', WP_PLUGIN_URL . '/import-from-ning/style.css' );
+	wp_enqueue_style( 'ning-importer-admin-css', WP_PLUGIN_URL . '/import-from-ning/style.css' );
 }
 
 function bp_ning_import_steps() {
@@ -18,11 +18,15 @@ function bp_ning_import_steps() {
 	bp_ning_import_header_markup();
 
 	if ( !isset( $_POST['current_step'] ) )
-		bp_ning_import_intro_markup();
+		$current_step = 'intro';
 	else
 		$current_step = $_POST['current_step'];
 
 	switch( $current_step ) {
+		case 'intro':
+			bp_ning_import_intro_markup();
+			break;
+
 		case 'members' :
 			bp_ning_import_members_markup();
 			break;
@@ -257,54 +261,48 @@ function bp_ning_import_create_user( $userdata ) {
 
 // Step setup functions
 function bp_ning_import_get_members() {
-	if ( !$left_off = get_option( 'bp_ning_left_off' ) )
-		$left_off = -1;
-
 	$members = bp_ning_import_prepare_json( 'members' );
-	if ( !$member_id_array = get_option( 'bp_ning_import_users' ) )
-		$member_id_array = array();
+	$member_id_array = get_option( 'bp_ning_import_users', array() );
+	$ning_id_array = get_option( 'bp_ning_user_array', array() );
 
-	if ( !$ning_id_array = get_option( 'bp_ning_user_array' ) )
-		$ning_id_array = array();
-
-	echo "Importing users - this may take a while.<br />";
-	echo "If you see a Refresh message at the bottom of the page you'll need to refresh the page in order to continue importing.";
-
-	$counter = $left_off;
+	$counter = 0;
+	$done = array();
 
 	foreach ( (array)$members as $member_key => $member ) {
+		$ning_id = $member->contributorName;
+		if (isset($ning_id_array[$ning_id])) {
+			continue;
+		}
 
-		// echo "<br />$member_key";
-		//if ( $member_key < $left_off )
-		// 	continue;
-
-		/* if ( $counter % 200 == 0 && $counter != 0 ) {
-		 	echo "<h2>Refresh to continue importing users</h2>";
+		if ( $counter % 200 == 0 && $counter != 0 ) {
+		 	//echo "<h2>Refresh to continue importing users</h2>";
 		 	update_option( 'bp_ning_import_users', $member_id_array );
 			update_option( 'bp_ning_user_array', $ning_id_array );
-		 	die();
-		 } */
+
+		 	$done['refresh'] = true;
+
+		 	return $done;
+		 }
 
 		 $bp_member = bp_ning_import_create_user( $member );
 
-		 if ( isset( $bp_member['id'] ) )
-		 	$member_id_array['success'][] = $bp_member;
-		 else
-		 	$member_id_array['error'][] = $bp_member;
+		 if ( isset( $bp_member['id'] ) ) {
+		 	$done['success'][] = $member_id_array['success'][] = $bp_member;
+		 }
+		 else {
+		 	$done['error'][] = $member_id_array['error'][] = $bp_member;
+		 }
 
 		 // Create an array of Ning IDs for later reference
-		 $ning_id = $member->contributorName;
 		 $ning_id_array[$ning_id] = $bp_member['id'];
 
-		 //update_option( 'bp_ning_left_off', $member_key );
 		 $counter++;
 	}
 
 	update_option( 'bp_ning_import_users', $member_id_array );
 	update_option( 'bp_ning_user_array', $ning_id_array );
-	delete_option( 'bp_ning_left_off' );
 
-	return $member_id_array;
+	return $done;
 }
 
 function bp_ning_import_get_profile_fields() {
@@ -496,7 +494,6 @@ function bp_ning_import_process_profiles() {
 	return true;
 }
 
-
 function bp_ning_import_process_inline_images_new( $type, $post_ID, $post_type = 'post' ) {
 	switch ($post_type) {
 		case 'post':
@@ -584,8 +581,10 @@ function bp_ning_import_get_groups() {
 	// Get list of Ning groups for cross reference
 	$groups = bp_ning_import_prepare_json( 'groups' );
 
-	if ( !$ning_group_id_array = get_option( 'bp_ning_group_array' ) )
-		$ning_group_id_array = array();
+	if ( ! $groups )
+		return true;
+
+	$ning_group_id_array = get_option( 'bp_ning_group_array', array() );
 
 	$counter = 0;
 	foreach ( (array)$groups as $group_key => $group ) {
@@ -593,8 +592,7 @@ function bp_ning_import_get_groups() {
 		if ( $counter >= 30 ) {
 			update_option( 'bp_ning_group_array', $ning_group_id_array );
 
-			echo "<h3>Refresh to continue</h3>";
-			die();
+			return false;
 		}
 
 		// Create the group
@@ -623,7 +621,7 @@ function bp_ning_import_get_groups() {
 			if ( $group_id = groups_create_group( $args ) ) {
 				groups_update_groupmeta( $group_id, 'last_activity', $date_created );
 				groups_update_groupmeta( $group_id, 'total_member_count', 1 );
-				
+
 				if ( bp_is_active( 'forums' ) ) {
 					groups_new_group_forum( $group_id, $group->title, $group->description );
 					echo "$group_key) <strong>Created group: $group->title</strong><br />";
@@ -653,6 +651,8 @@ function bp_ning_import_get_groups() {
 	update_option( 'bp_ning_group_array', $ning_group_id_array );
 
 	unset( $groups );
+
+	return true;
 }
 
 
@@ -664,8 +664,7 @@ function bp_ning_import_get_discussion_groups() {
 	// Get list of Ning groups for cross reference
 	$groups = bp_ning_import_prepare_json( 'groups' );
 
-	if ( !$ning_group_id_array = get_option( 'bp_ning_group_array' ) )
-		$ning_group_id_array = array();
+	$ning_group_id_array = get_option( 'bp_ning_group_array', array() );
 
 	// Loop through each discussion. If the topic doesn't have a corresponding group, create one. Then insert the forum items.
 
@@ -674,6 +673,10 @@ function bp_ning_import_get_discussion_groups() {
 	$counter = 0;
 	foreach ( (array)$discussions as $discussion_key => $discussion ) {
 		if ( !isset( $discussion->category ) )
+			continue;
+
+		$ning_group_id = $discussion->category;
+		if ( isset( $ning_group_id_array[$ning_group_id] ) )
 			continue;
 
 		// todo - what if a topic has no group and no category
@@ -706,10 +709,14 @@ function bp_ning_import_get_discussion_groups() {
 				groups_new_group_forum( $group_id, $discussion->category, $discussion->category );
 				echo "<strong>Created group: $discussion->category</strong><br />";
 
-				$ning_group_id = $discussion->category;
 				$ning_group_id_array[$ning_group_id] = $group_id;
 				update_option( 'bp_ning_group_array', $ning_group_id_array );
 			}
+		}
+		else {
+			echo "<strong>Group already exists: $discussion->category</strong><br />";
+			$ning_group_id_array[$ning_group_id] = $group_id;
+			update_option( 'bp_ning_group_array', $ning_group_id_array );
 		}
 	}
 }
@@ -724,21 +731,23 @@ function bp_ning_import_get_discussions() {
 	// Get list of Ning groups for cross reference
 	$groups = bp_ning_import_prepare_json( 'groups' );
 
-	if ( !$ning_group_id_array = get_option( 'bp_ning_group_array' ) )
-		$ning_group_id_array = array();
-
+	$ning_group_id_array = get_option( 'bp_ning_group_array', array() );
 	$discussions = bp_ning_import_prepare_json( 'discussions' );
-
-	//do_action( 'bbpress_init' );
+	//delete_option('bp_ning_discussions_imported');
+	$imported = get_option( 'bp_ning_discussions_imported', array() );
 
 	$counter = 0;
-	$what = 0;
+
 	foreach ( (array)$discussions as $discussion_key => $discussion ) {
 		unset( $topic_id );
 
-		if ( $counter >= 4 ) {
-			echo "<h3>Refresh to continue</h3>";
-			die();
+		if ( isset( $imported[ $discussion->id ] ) )
+			continue;
+
+		if ( $counter >= 10 ) {
+			update_option( 'bp_ning_discussions_imported', $imported );
+			printf( __( '%d out of %d discussions done.' ), count($imported), count($discussions) );
+			return false;
 		}
 
 		$slug = sanitize_title( esc_attr( $discussion->category ) );
@@ -763,9 +772,7 @@ function bp_ning_import_get_discussions() {
 		} else {
 			continue; // todo fix me!
 		}
-
-		// Let's handle inline images!!!1!1! ROFLMAO
-		$discussion->description = bp_ning_import_process_inline_images( $discussion->description, 'discussions' );
+		$group = new BP_Groups_Group( $group_id );
 
 		$args = array(
 			'topic_title' => $discussion->title,
@@ -786,7 +793,8 @@ function bp_ning_import_get_discussions() {
 		$topic_exists = $wpdb->get_results( $q );
 
 		if ( isset( $topic_exists[0] ) ) {
-			//echo "<em>- Topic $discussion->title already exists</em><br />";
+			echo "<em>- Topic $discussion->title already exists</em><br />";
+			$imported[$discussion->id] = true;
 			continue;
 		}
 
@@ -794,22 +802,24 @@ function bp_ning_import_get_discussions() {
 			{ echo "No forum id - skipping"; continue; }
 
 		if ( !$topic_id = bp_forums_new_topic( $args ) ) {
+			// TODO: WTF?
+			return false;
+
 			echo "<h2>Refresh to import more discussions</h2>";
 			die();
 		} else {
+			bp_ning_import_process_inline_images_new( 'discussions', $topic_id, 'topic' );
 			echo "<strong>- Created topic: $discussion->title</strong><br />";
 		}
 
+		$activity_content = bp_create_excerpt( $discussion->description );
 		$skip_activity = get_option( 'bp_ning_skip_forum_activity' );
 
 		if ( !$skip_activity ) {
 			$topic = bp_forums_get_topic_details( $topic_id );
 
-			$group = new BP_Groups_Group( $group_id );
-
 			// Activity item
-			$activity_action = sprintf( __( '%s started the forum topic %s in the group %s:', 'buddypress'), bp_core_get_userlink( $creator_id ), '<a href="' . bp_get_group_permalink( $group ) . 'forum/topic/' . $topic->topic_slug .'/">' . attribute_escape( $topic->topic_title ) . '</a>', '<a href="' . bp_get_group_permalink( $group ) . '">' . attribute_escape( $group->name ) . '</a>' );
-			$activity_content = bp_create_excerpt( $topic_text );
+			$activity_action = sprintf( __( '%s started the forum topic %s in the group %s:', 'buddypress'), bp_core_get_userlink( $creator_id ), '<a href="' . bp_get_group_permalink( $group ) . 'forum/topic/' . $topic->topic_slug .'/">' . esc_html( $topic->topic_title ) . '</a>', '<a href="' . bp_get_group_permalink( $group ) . '">' . esc_html( $group->name ) . '</a>' );
 
 			groups_record_activity( array(
 				'user_id' => $creator_id,
@@ -836,8 +846,6 @@ function bp_ning_import_get_discussions() {
 				$ndate = strtotime( $reply->createdDate );
 				$date_created = date( "Y-m-d H:i:s", $ndate );
 
-				$reply->description = bp_ning_import_process_inline_images( $reply->description, 'discussions' );
-
 				$args = array(
 					'topic_id' => $topic_id,
 					'post_text' => $reply->description,
@@ -855,8 +863,11 @@ function bp_ning_import_get_discussions() {
 
 				$post_id = bp_forums_insert_post( $args );
 
-				if ( $post_id )
-					echo "<strong>- Imported forum post: $reply->description</strong><br />";
+				if ( $post_id ) {
+					bp_ning_import_process_inline_images_new( 'discussions', $post_id, 'topic_reply' );
+					$import_summary = esc_html( bp_create_excerpt($reply->description, 100, array('html' => false)) );
+					echo "<em>- Imported forum post: $import_summary</em><br />";
+				}
 
 
 				if ( !groups_is_user_member( $creator_id, $group_id ) ) {
@@ -887,12 +898,12 @@ function bp_ning_import_get_discussions() {
 				// Activity item
 				$topic = bp_forums_get_topic_details( $topic_id );
 
-				$activity_action = sprintf( __( '%s posted on the forum topic %s in the group %s:', 'buddypress'), bp_core_get_userlink( $creator_id ), '<a href="' . bp_get_group_permalink( $group_id ) . 'forum/topic/' . $topic->topic_slug .'/">' . attribute_escape( $topic->topic_title ) . '</a>', '<a href="' . bp_get_group_permalink( $group ) . '">' . attribute_escape( $group->name ) . '</a>' );
+				$activity_action = sprintf( __( '%s posted on the forum topic %s in the group %s:', 'buddypress'), bp_core_get_userlink( $creator_id ), '<a href="' . bp_get_group_permalink( $group ) . 'forum/topic/' . $topic->topic_slug .'/">' . esc_attr( $topic->topic_title ) . '</a>', '<a href="' . bp_get_group_permalink( $group ) . '">' . esc_attr( $group->name ) . '</a>' );
 				$activity_content = bp_create_excerpt( $reply->description );
 				$primary_link = bp_get_group_permalink( $group ) . 'forum/topic/' . $topic->topic_slug . '/';
 
-				if ( $page )
-					$primary_link .= "?topic_page=" . $page;
+				//if ( $page )
+				//	$primary_link .= "?topic_page=" . $page;
 				//echo $primary_link; die();
 
 				groups_record_activity( array(
@@ -911,12 +922,12 @@ function bp_ning_import_get_discussions() {
 			}
 		}
 
-		unset( $discussions[$discussion_key] );
+		$imported[$discussion->id] = true;
+		$counter++;
 	}
 
-	unset( $discussions );
-
-
+	update_option( 'bp_ning_discussions_imported', $imported );
+	return true;
 }
 
 function bp_ning_import_get_blogs() {
@@ -935,8 +946,6 @@ function bp_ning_import_get_blogs() {
 		$ndate = strtotime( $blog->publishTime );
 		$date_created = date( "Y-m-d H:i:s", $ndate );
 
-		$blog->description = bp_ning_import_process_inline_images( $blog->description, 'blogs' );
-
 		if ( !$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s AND post_type='post' AND post_date = %s", $blog->title, $date_created ) ) ) {
 			$args = array(
 				'post_type' => 'post',
@@ -948,6 +957,8 @@ function bp_ning_import_get_blogs() {
 			);
 
 			$post_id = wp_insert_post( $args );
+			bp_ning_import_process_inline_images_new( 'blogs', $post_id, 'post' );
+
 			echo "<strong>Blog post created: $blog->title</strong><br />";
 
 		} else {
@@ -961,8 +972,6 @@ function bp_ning_import_get_blogs() {
 
 				$ndate = strtotime( $reply->createdDate );
 				$date_created = date( "Y-m-d H:i:s", $ndate );
-
-				$reply->description = bp_ning_import_process_inline_images( $reply->description, 'blogs' );
 
 				$commenter_data = get_userdata( $creator_id );
 
@@ -985,6 +994,7 @@ function bp_ning_import_get_blogs() {
 					continue;
 
 				$post_id = wp_insert_comment( $args );
+				bp_ning_import_process_inline_images_new( 'blogs', $post_id, 'comment' );
 
 			}
 		}
@@ -1007,7 +1017,6 @@ function bp_ning_import_get_blogs() {
 			if ( !$page->description )
 				continue;
 
-			$page->description = bp_ning_import_process_inline_images( $page->description, 'pages' );
 			$page->description = str_replace( "\n", '', $page->description );
 
 			if ( !$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s AND post_type='page' AND post_date = %s", $page->title, $date_created ) ) ) {
@@ -1021,6 +1030,7 @@ function bp_ning_import_get_blogs() {
 				);
 
 				$post_id = wp_insert_post( $args );
+				//bp_ning_import_process_inline_images_new( 'pages', $post_id );
 				echo "<strong>Page created: $page->title</strong><br />";
 
 			} else {
@@ -1030,6 +1040,107 @@ function bp_ning_import_get_blogs() {
 	}
 
 	unset( $pages );
+}
+
+function bp_ning_import_get_events() {
+	global $wpdb;
+
+	$ning_id_array = get_option( 'bp_ning_user_array' );
+	//delete_option('bp_ning_events_imported');
+	$imported = get_option( 'bp_ning_events_imported', array() );
+
+	$events = bp_ning_import_prepare_json( 'events', false );
+
+	$counter = 0;
+
+	foreach ( (array)$events as $event ) {
+		if ( isset( $imported[ $event->id ] ) )
+			continue;
+
+		if ($counter >= 30) {
+			update_option('bp_ning_events_imported', $imported);
+			printf( __( '%d out of %d events done.' ), count($imported), count($events) );
+			return false;
+		}
+
+		$post_date = date('Y-m-d H:i:s', strtotime($event->createdDate));
+		if ( $post_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s AND post_type=%s AND post_date = %s", $event->title, TribeEvents::POSTTYPE, $post_date ) ) ) {
+			echo "<strong>Event already exists: $event->title</strong><br />";
+			$imported[$event->id] = true;
+			continue;
+		}
+
+
+		$ning_group_creator_id = $event->contributorName;
+		$creator_id = $ning_id_array[$ning_group_creator_id];
+		$creator = get_userdata( $creator_id );
+
+		$start = strtotime($event->startDate);
+		$end = strtotime($event->endDate);
+		$args = array(
+			'post_title' => $event->title,
+			'post_content' => $event->description,
+			'post_date' => $post_date,
+			'post_modified' => date('Y-m-d H:i:s', strtotime($event->updatedDate)),
+			'post_status' => 'publish',
+			'post_author' => $creator_id,
+			'EventStartDate' => date('Y-m-d', $start),
+			'EventEndDate' => date('Y-m-d', $end),
+			'Venue' => array(),
+			'Organizer' => array(
+				'Organizer' => $creator->display_name,
+				'Email' => $creator->user_email
+			),
+		);
+
+		if (isset($event->isPrivate) && $event->isPrivate)
+			$args['post_status'] = 'private';
+
+		if (isset($event->allDay) && $event->allDay) {
+			$args['EventAllDay'] = true;
+		}
+		else {
+			$args['EventStartHour'] = date('h', $start);
+			$args['EventStartMinute'] = date('i', $start);
+			$args['EventStartMeridian'] = date('a', $start);
+			$args['EventEndHour'] = date('h', $end);
+			$args['EventEndMinute'] = date('i', $end);
+			$args['EventEndMeridian'] = date('a', $end);
+		}
+
+		if (isset($event->location)) {
+			$args['Venue'] = array(
+				'Venue' => $event->location,
+				'Country' => 'AU',
+			);
+
+			if (isset($event->street))
+				$args['Venue']['Address'] = $event->street;
+
+			if (isset($event->city))
+				$args['Venue']['City'] = $event->city;
+
+			if (isset($event->contactInfo))
+				$args['Venue']['Phone'] = $event->contactInfo;
+		}
+		$event_id = tribe_create_event($args);
+
+		if (is_wp_error($event_id)) {
+			echo "<strong>Unable to create event: $event->title - Error was " . $event_id->get_error_message() . '</strong><br />';
+			continue;
+		}
+
+		if (isset($event->website))
+			add_post_meta($event_id, '_bp_ning_event_website', $event->website);
+
+		$imported[$event->id] = true;
+		$counter++;
+
+		echo "<strong>Event created: $event->title</strong><br />";
+	}
+	update_option('bp_ning_events_imported', $imported);
+
+	return true;
 }
 
 
@@ -1111,6 +1222,7 @@ function bp_ning_import_intro_markup() {
 			<li>Miscellaneous discussions</li>
 			<li>Blogs</li>
 			<li>Pages</li>
+			<li>Events</li>
 		</ul>
 
 		<p>At this time, the plugin does <em>not</em> import the following:</p>
@@ -1120,7 +1232,6 @@ function bp_ning_import_intro_markup() {
 			<li>Videos</li>
 			<li>Music</li>
 			<li>Notes</li>
-			<li>Events</li>
 		</ul>
 
 		<p>These latter items are not supported by BuddyPress without the use of plugins. At the end of the import process, you'll see a list of plugins that might help you to manage some of the items that the importer can't handle.</li>
@@ -1147,6 +1258,36 @@ function bp_ning_import_intro_markup() {
 				</form>
 			</div>
 
+			<p><?php _e( 'Did something break half way through? You can always start over.', 'bp-ning-import' ) ?></p>
+
+			<form method="post" action="">
+
+			<div class="submit">
+				<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Jump to Step' ) ?>">
+				<label for="current_step">Jump to</label>
+				<select id="current_step" name="current_step">
+					<option value="members">Members</option>
+					<option value="profiles">Profiles</option>
+					<option value="groups">Groups</option>
+					<option value="discussion_groups">Discussion Groups</option>
+					<option value="discussions">Discussions</option>
+					<option value="blogs">Blog Posts</option>
+					<option value="events">Events</option>
+					<option value="finished">Send Email</option>
+				</select>
+			</div>
+
+			</form>
+
+			<form method="post" action="">
+
+			<div class="submit">
+				<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Start Over' ) ?>">
+				<input type="hidden" id="current_step" name="current_step" value="start_over">
+			</div>
+
+			</form>
+
 		<?php else : ?>
 
 			<h3><?php _e( 'Houston, we have a problem', 'bp-ning-import' ) ?></h3>
@@ -1165,15 +1306,25 @@ function bp_ning_import_intro_markup() {
 
 		<p>If you're ready to send out notifications, click Continue. You'll be taken to a screen where you can customize the content of the notification email before it's sent.</p>
 
-		<p>Or, if you'd like, you can start over with the import process.</p>
+		<p>You can also import just the new content since the last import. Or, if you'd like, you can start over with the import process.</p>
 
 		<p>What do you want to do?</p>
 
 		<form method="post" action="">
 
 		<div class="submit">
-			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
-			<input type="hidden" id="current_step" name="current_step" value="blogs_done">
+			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Import New Content' ) ?>">
+			<label for="current_step">Jump to</label>
+			<select id="current_step" name="current_step">
+				<option value="members">Members</option>
+				<option value="profiles">Profiles</option>
+				<option value="groups">Groups</option>
+				<option value="discussion_groups">Discussion Groups</option>
+				<option value="discussions">Discussions</option>
+				<option value="blogs">Blog Posts</option>
+				<option value="events">Events</option>
+				<option value="finished">Send Email</option>
+			</select>
 		</div>
 
 		</form>
@@ -1187,7 +1338,6 @@ function bp_ning_import_intro_markup() {
 
 		</form>
 
-
 	<?php else : ?>
 		<h3>Hey!</h3>
 
@@ -1195,15 +1345,25 @@ function bp_ning_import_intro_markup() {
 
 		<p>If you want to go back to the final screen of the import process, where you can see a list of plugins available for BuddyPress, click Continue.</p>
 
-		<p>Or, if you'd like, you can start over with the import process.</p>
+		<p>You can also import just the new content since the last import. Or, if you'd like, you can start over with the import process.</p>
 
 		<p>What do you want to do?</p>
 
 		<form method="post" action="">
 
 		<div class="submit">
-			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
-			<input type="hidden" id="current_step" name="current_step" value="send_email">
+			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Import New Content' ) ?>">
+			<label for="current_step">Jump to</label>
+			<select id="current_step" name="current_step">
+				<option value="members">Members</option>
+				<option value="profiles">Profiles</option>
+				<option value="groups">Groups</option>
+				<option value="discussion_groups">Discussion Groups</option>
+				<option value="discussions">Discussions</option>
+				<option value="blogs">Blog Posts</option>
+				<option value="events">Events</option>
+				<option value="finished">Send Email</option>
+			</select>
 		</div>
 
 		</form>
@@ -1221,7 +1381,7 @@ function bp_ning_import_intro_markup() {
 	<?php endif; ?>
 
 
-<?
+<?php
 }
 
 
@@ -1236,15 +1396,27 @@ function bp_ning_import_members_markup() {
 
 		<p><?php _e( 'You will have a chance later on to email new members with their login information.', 'bp-ning-import' ) ?></p>
 
+		<?php if ( !empty( $member_id_array['refresh'] ) ) : ?>
+			<p><strong><?php _e( 'User importing is not yet complete. Review the imported members below and continue when ready.', 'bp-ning-import' ) ?></strong></p>
 
-		<div class="submit">
-			<form method="post" action="">
-				<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
-				<input type="hidden" id="current_step" name="current_step" value="profiles">
-			</form>
-		</div>
+			<div class="submit">
+				<form method="post" action="">
+					<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
+					<input type="hidden" id="current_step" name="current_step" value="members">
+				</form>
+			</div>
+		<?php else: ?>
+			<p><strong><?php _e( 'All members are now imported. Review the imported members below and continue to import profile data.', 'bp-ning-import' ) ?></strong></p>
 
-		<table id="ning-import-users">
+			<div class="submit">
+				<form method="post" action="">
+					<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
+					<input type="hidden" id="current_step" name="current_step" value="profiles">
+				</form>
+			</div>
+		<?php endif; ?>
+
+		<table id="ning-import-users" class="widefat">
 
 		<tr>
 			<th><?php _e( 'User ID' ) ?></th>
@@ -1257,7 +1429,7 @@ function bp_ning_import_members_markup() {
 		<?php foreach( (array)$member_id_array['success'] as $bp_member ) : ?>
 			<tr>
 				<td><?php echo $bp_member['id'] ?></td>
-				<td><?php echo $bp_member['user_name'] ?></td>
+				<td><?php echo esc_html($bp_member['display_name']) ?></td>
 				<td><?php echo $bp_member['user_login'] ?></td>
 				<td><?php echo $bp_member['user_email'] ?></td>
 			</tr>
@@ -1269,7 +1441,7 @@ function bp_ning_import_members_markup() {
 		<p><?php _e( 'Sorry, I was unable to create any accounts.', 'bp-ning-import' ) ?></p>
 
 	<?php endif; ?>
-<?
+<?php
 }
 
 function bp_ning_import_profiles_markup() {
@@ -1323,27 +1495,38 @@ function bp_ning_import_profiles_markup() {
 
 	</form>
 
-<?
+<?php
 }
 
 function bp_ning_import_profile_two_markup() {
 ?>
 	<h3><?php _e( 'Profile fields', 'bp-ning-import' ) ?></h3>
 
-	<p>Importing your user profile data and profile comments. If the page times out and you don't see a Continue button, hit Refresh.</p>
+	<p>Importing your user profile data and profile comments.</p>
 
-	<?php bp_ning_import_process_profiles() ?>
+	<?php $done = bp_ning_import_process_profiles() ?>
 
-	<p><?php _e( 'Profile data successfully imported! Click Continue to continue the import process.', 'bp-ning-import' ) ?></p>
+	<?php if ( $done ): ?>
+		<p><?php _e( 'Profile data <strong>successfully imported</strong>! Click Continue to continue the import process.', 'bp-ning-import' ) ?></p>
 
-	<div class="submit">
-		<form method="post" action="">
-			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
-			<input type="hidden" id="current_step" name="current_step" value="groups" />
-		</form>
-	</div>
+		<div class="submit">
+			<form method="post" action="">
+				<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
+				<input type="hidden" id="current_step" name="current_step" value="groups" />
+			</form>
+		</div>
+	<?php else: ?>
+		<p><?php _e( 'Profile data <strong>not yet finished</strong> importing. Click Continue to continue the importing profile data.', 'bp-ning-import' ) ?></p>
 
-<?
+		<div class="submit">
+			<form method="post" action="">
+				<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
+				<input type="hidden" id="current_step" name="current_step" value="profiles_done" />
+			</form>
+		</div>
+	<?php endif; ?>
+
+<?php
 }
 
 
@@ -1357,16 +1540,24 @@ function bp_ning_import_groups_markup() {
 
 		<p><?php _e( 'Once you\'ve imported all your groups, click Continue at the bottom of the page to move on to the next step.', 'bp-ning-import' ) ?></p>
 
-	<?php $groups = bp_ning_import_get_groups(); ?>
+	<?php
+	$groups = bp_ning_import_get_groups();
+
+	if ( ! $groups ): ?>
+
+		<p><strong><?php _e('Refresh to continue!', 'bp-ning-import') ?></strong></p>
+
+	<?php else: ?>
 
 	<div class="submit">
 			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
-			<input type="hidden" id="current_step" name="current_step" value="groups_done" />
+			<input type="hidden" id="current_step" name="current_step" value="discussion_groups" />
 	</div>
+	<?php endif; ?>
 
 	</form>
 
-<?
+<?php
 }
 
 function bp_ning_import_discussion_groups_markup() {
@@ -1377,7 +1568,7 @@ function bp_ning_import_discussion_groups_markup() {
 
 		<?php if ( bp_is_active( 'forums' ) && bp_forums_is_installed_correctly() ) : ?>
 			<p><?php _e( 'Import from Ning is now importing your Ning groups. If you\'ve got a lot of groups, you might have to refresh the page in order to get them all. If so, you will see a message near the bottom of the screen.', 'bp-ning-import' ) ?></p>
-	
+
 			<p><?php _e( 'Once you\'ve finished importing groups, click Continue at the bottom of the page to move on to the next step.', 'bp-ning-import' ) ?></p>
 
 			<?php $discussion_groups = bp_ning_import_get_discussion_groups(); ?>
@@ -1388,12 +1579,12 @@ function bp_ning_import_discussion_groups_markup() {
 
 	<div class="submit">
 			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
-			<input type="hidden" id="current_step" name="current_step" value="discussion_groups_done" />
+			<input type="hidden" id="current_step" name="current_step" value="discussions" />
 	</div>
 
 	</form>
 
-<?
+<?php
 }
 
 
@@ -1404,24 +1595,33 @@ function bp_ning_import_discussions_markup() {
 
 		<h3><?php _e( 'Discussions', 'bp-ning-import' ) ?></h3>
 
-		<p><?php _e( 'Import from Ning is now importing your Ning groups. Importing discussion is hard work. If you\'re importing more than a few, you\'ll probably find that you need to refresh the page several times to get them all. If you see a Refresh message at the bottom of the screen, you\'ll know you need to refresh.', 'bp-ning-import' ) ?></p>
-
-
-
-		<p><?php _e( 'When all of your discussions have been imported, a Continue button will appear near the bottom of the screen. Click it to move on to the next step.', 'bp-ning-import' ) ?></p>
-
-
+		<p><?php _e( 'Import from Ning is now importing your Ning groups.', 'bp-ning-import' ) ?></p>
 
 		<?php $discussions = bp_ning_import_get_discussions(); ?>
 
-	<div class="submit">
-			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
-			<input type="hidden" id="current_step" name="current_step" value="discussions_done" />
-	</div>
+		<?php if ($discussions): ?>
+
+			<p><?php _e( '<strong>All of your discussions have been imported!</strong> Hit Continue to continue to the next step.', 'bp-ning-import' ) ?></p>
+
+			<div class="submit">
+					<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
+					<input type="hidden" id="current_step" name="current_step" value="blogs" />
+			</div>
+
+		<?php else: ?>
+
+			<p><?php _e( 'Discussions are <strong>not yet finished</strong> importing. Hit Continue to continue importing discussions.', 'bp-ning-import' ) ?></p>
+
+			<div class="submit">
+					<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
+					<input type="hidden" id="current_step" name="current_step" value="discussions" />
+			</div>
+
+		<?php endif; ?>
 
 	</form>
 
-<?
+<?php
 }
 
 
@@ -1439,12 +1639,45 @@ function bp_ning_import_blogs_markup() {
 
 	<div class="submit">
 			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
-			<input type="hidden" id="current_step" name="current_step" value="blogs_done" />
+			<input type="hidden" id="current_step" name="current_step" value="events" />
 	</div>
 
 	</form>
 
-<?
+<?php
+}
+
+
+function bp_ning_import_events_markup() {
+?>
+	<form method="post" action="">
+
+		<h3><?php _e( 'Eventss', 'bp-ning-import' ) ?></h3>
+
+		<p><?php _e( 'Import from Ning is looking for events to import.', 'bp-ning-import' ) ?></p>
+
+
+	<?php $done = bp_ning_import_get_events(); ?>
+
+	<?php if ($done): ?>
+		<p><?php _e( 'Events are <strong>finished</strong> importing. Hit Continue to wrap up.', 'bp-ning-import' ) ?></p>
+
+		<div class="submit">
+				<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
+				<input type="hidden" id="current_step" name="current_step" value="finished" />
+		</div>
+	<?php else: ?>
+		<p><?php _e( 'Events are <strong>not yet finished</strong> importing. Hit Continue to continue importing events.', 'bp-ning-import' ) ?></p>
+
+		<div class="submit">
+				<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
+				<input type="hidden" id="current_step" name="current_step" value="events" />
+		</div>
+	<?php endif; ?>
+
+	</form>
+
+<?php
 }
 
 
@@ -1496,7 +1729,7 @@ The folks at $blogname";
 
 	<p><strong>Don't want to send out an email yet?</strong> Want to take a minute to look around the site first? No problem - just visit the Dashboard > BuddyPress > Import from Ning page at any time in the future. The plugin will remember that you've already imported your content and bring you directly to this screen, so that you can send the notification email to your members.</p>
 
-	<p>In the box below, you'll find some suggested text for the email. Feel free to modify it to suit your needs, but <strong>make sure you include %USERNAME% and %PASSWORD% somewhere in the text</strong>. The plugin will replace <strong>%USERDATA%</strong> and <strong>%PASSWORD%</strong> with the username and password of the recipient. Without this information, new users won't be able to log in.</p>
+	<p>In the box below, you'll find some suggested text for the email. Feel free to modify it to suit your needs, but <strong>make sure you include %USERNAME% and %PASSWORD% somewhere in the text</strong>. The plugin will replace <strong>%USERNAME%</strong> and <strong>%PASSWORD%</strong> with the username and password of the recipient. Without this information, new users won't be able to log in.</p>
 
 	<table class="form-table">
 
@@ -1512,11 +1745,11 @@ The folks at $blogname";
 
 	</table>
 
-	<p>When you click on Continue, emails will be sent to the addresses listed below. <strong>Warning:</strong> Sending thousands of emails at the same time might get you marked as spam by some ISPs. If you've got many hundreds of members, you might consider letting them know manually. They can get their login name and password by using the "Forgot your password?" link on <a href="<?php echo bp_root_domain() ?>/wp-login.php?action=lostpassword">the Lost Password</a> page.</p>
+	<p>When you click on Send Emails, emails will be sent to the addresses listed below. <strong>Warning:</strong> Sending thousands of emails at the same time might get you marked as spam by some ISPs. If you've got many hundreds of members, you might consider letting them know manually. They can get their login name and password by using the "Forgot your password?" link on <a href="<?php echo bp_root_domain() ?>/wp-login.php?action=lostpassword">the Lost Password</a> page.</p>
 
 
 	<div class="submit">
-			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue' ) ?>">
+			<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Send Emails' ) ?>">
 			<input type="hidden" id="current_step" name="current_step" value="send_email" />
 	</div>
 
@@ -1540,16 +1773,47 @@ function bp_ning_import_sent_email_markup() {
 	if ( !get_option( 'bp_ning_emails_sent' ) ) {
 
 		$users = get_option( 'bp_ning_import_users' );
+		$emails_sent_to = get_option( 'bp_ning_emails_sent_to', array() );
 
-		$subject = stripslashes( $_POST['email-subject'] );
-		$email_text = stripslashes( $_POST['email-text'] );
+		if (isset($_POST['email-subject']))
+			update_option( 'bp_ning_import_email_subject', stripslashes( $_POST['email-subject'] ) );
+		if (isset($_POST['email-text']))
+			update_option( 'bp_ning_import_email_text', stripslashes( $_POST['email-text'] ) );
+
+		$subject = get_option( 'bp_ning_import_email_subject' );
+		$email_text = get_option( 'bp_ning_import_email_text' );
+
+		$counter = 0;
 
 		foreach ( (array)$users['success'] as $user ) {
 			$to = $user['user_email'];
+			if ( isset( $emails_sent_to[ $to ] ) ) {
+				continue;
+			}
+
+			if ( $counter >= 100 ) {
+?>
+			<h3><?php _e('Sending Emails', 'bp-ning-import') ?></h3>
+			<p>Sent emails to <?php echo count($emails_sent_to) ?> out of <?php echo count($users['success']) ?> users.</p>
+
+			<form method="post" action="">
+				<div class="submit">
+						<input class="button primary-button" type="submit" id='submit' name='submit' value="<?php _e( 'Continue Sending' ) ?>">
+						<input type="hidden" id="current_step" name="current_step" value="send_email" />
+				</div>
+			</form>
+<?php
+				return;
+			}
+
 			$message = str_replace( "%USERNAME%", $user['user_login'], $email_text );
 			$message = str_replace( "%PASSWORD%", $user['password'], $message );
 
 			wp_mail( $to, $subject, $message );
+
+			$emails_sent_to[ $to ] = true;
+			update_option( 'bp_ning_emails_sent_to', $emails_sent_to );
+			$counter++;
 		}
 
 		update_option( 'bp_ning_emails_sent', 1 );
@@ -1605,5 +1869,3 @@ function bp_ning_import_donate_message() {
 
 <?php
 }
-
-?>

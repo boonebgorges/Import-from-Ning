@@ -1,9 +1,9 @@
 === Plugin Name ===
-Contributors: boonebgorges
+Contributors: boonebgorges, rmccue, sennza
 Donate link: http://teleogistic.net/donate
 Tags: buddypress, ning, import
 Requires at least: WP 2.8, BuddyPress 1.2
-Tested up to: WP 2.9.2, BuddyPress 1.3 bleeding
+Tested up to: WP 3.5.1, BuddyPress 1.7
 Stable tag: 2.0.7
 
 Imports the contents of a Ning Network Archive into BuddyPress
@@ -46,10 +46,17 @@ In BuddyPress, each forum must be associated with a group. In cases where your N
 
 = You rule! =
 
-That's not really a question, but thanks. You can read my blog at http://teleogistic.net, follow me on Twitter at http://twitter.com/boone, or send a donation at http://teleogistic.net/donate.
-
+That's not really a question, but thanks. You are pretty cool yourself. 
 
 == Changelog ==
+
+= 2.1 =
+* Major refactor for better stability and performance on large imports. Huge thanks to rmccue and sennza.
+* Better support for screwed-up JSON export formats from Ning
+* Improved PHP 5.4 support
+* Adds support for Events import (using The Events Calendar)
+* Better username and email address sanitization
+* Improved image importing
 
 = 2.0.7 =
 * Improved compatibility with WP Network Admin

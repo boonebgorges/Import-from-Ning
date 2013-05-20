@@ -3,8 +3,8 @@
 Plugin Name: Import from Ning
 Plugin URI: http://teleogistic.net
 Description: Import members and content from a Ning network export into BuddyPress
-Author: Boone Gorges
-Version: 2.0.8
+Author: Boone Gorges, Ryan McCue
+Version: 2.1
 Author URI: http://teleogistic.net
 */
 

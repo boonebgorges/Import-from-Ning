@@ -4,7 +4,7 @@ Donate link: http://teleogistic.net/donate
 Tags: buddypress, ning, import
 Requires at least: WP 2.8, BuddyPress 1.2
 Tested up to: WP 3.5.1, BuddyPress 1.7
-Stable tag: 2.0.7
+Stable tag: 2.1
 
 Imports the contents of a Ning Network Archive into BuddyPress
 

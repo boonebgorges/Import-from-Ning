@@ -12,7 +12,6 @@ Imports the contents of a Ning Network Archive into BuddyPress
 
 This plugin imports the contents of your Ning Network Archive into BuddyPress.
 
-
 == Installation ==
 
 * Install in your plugins folder and activate.
@@ -26,7 +25,7 @@ This plugin imports the contents of your Ning Network Archive into BuddyPress.
 
 = What if I'm not running BuddyPress? =
 
-Version 2.0 of Import From Ning does not support WordPress standalone. Use version 1.1: http://wordpress.org/extend/plugins/import-from-ning/download/
+Version 2.0+ of Import From Ning does not support WordPress standalone. Use version 1.1: http://wordpress.org/extend/plugins/import-from-ning/download/
 
 = What content will Import From Ning import? =
 

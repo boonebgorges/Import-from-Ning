@@ -1,13 +1,12 @@
 <?php
 /*
 Plugin Name: Import from Ning
-Plugin URI: http://teleogistic.net
+Plugin URI: http://github.com/boonebgorges/Import-from-Ning
 Description: Import members and content from a Ning network export into BuddyPress
-Author: Boone Gorges, Ryan McCue
+Author: Boone Gorges, Ryan McCue, Bronson Quick
 Version: 2.1
-Author URI: http://teleogistic.net
+Author URI: http://boone.gorg.es
 */
-
 
 /* Only load BuddyPress functions if BP is active */
 function bp_ning_import_bp_init() {
